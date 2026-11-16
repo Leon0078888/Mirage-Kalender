@@ -1,0 +1,289 @@
+
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a1220">
+<title>MIRAGE | Leitungskalender</title>
+<style>
+:root{--bg:#080e18;--panel:#101b2b;--panel2:#14243a;--line:#253a55;--muted:#91a6c2;--text:#eef5ff;--blue:#2879ed}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 78% -15%,#1b3d6b 0,transparent 38%),var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1600px;margin:auto;padding:25px 28px 36px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{width:46px;height:46px;border:1px solid #438ce7;border-radius:13px;background:linear-gradient(145deg,#2466b2,#10243f);display:grid;place-items:center;font-size:22px;font-weight:900}
+.brand b{font-size:21px;letter-spacing:4px}
+.brand small{display:block;color:#7eafea;font-size:10px;letter-spacing:2px;font-weight:750;margin-top:1px}
+.topright{display:flex;align-items:center;gap:14px}
+.live{color:#adc2dc;font-size:12px}
+.live:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#35d69a;margin-right:8px}
+.btn{border:1px solid var(--line);background:#15253b;color:var(--text);padding:10px 14px;border-radius:10px;font-weight:650}
+.btn:hover{border-color:#5796ec;background:#1a3455}
+.btn.primary{background:linear-gradient(135deg,#2b80f3,#1659bb);border-color:#438ff5}
+.btn.danger{color:#ff9eac;border-color:#70404c;background:#321e29}
+.intro{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:17px;gap:15px}
+.eyebrow{color:#79b0f6;text-transform:uppercase;letter-spacing:2px;font-size:10px;font-weight:800}
+.intro h1{font-size:27px;margin:4px 0}
+.intro p{margin:0;color:var(--muted);font-size:13px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;background:#101b2bdd;border:1px solid var(--line);border-radius:15px 15px 0 0}
+.nav{display:flex;align-items:center;gap:9px}
+.nav strong{min-width:205px;text-align:center}
+.iconbtn{height:35px;width:35px;border:1px solid var(--line);border-radius:9px;background:#172840;color:#e5f0ff;font-size:20px}
+.righttools{display:flex;align-items:center;gap:10px}
+.tz{font-size:11px;color:var(--muted)}
+.frame{overflow:auto;border:1px solid var(--line);border-top:0;border-radius:0 0 15px 15px;background:#0d1725}
+.calendar{min-width:950px}
+.headgrid,.bodygrid{display:grid;grid-template-columns:76px repeat(7,minmax(115px,1fr))}
+.headgrid{position:sticky;top:0;z-index:5;background:#122035;border-bottom:1px solid var(--line)}
+.blank{border-right:1px solid var(--line)}
+.dayhead{text-align:center;padding:10px 5px 9px;border-right:1px solid #243750;min-height:68px}
+.dayhead .dow{font-size:10px;color:#93a9c5;font-weight:800;letter-spacing:1.4px}
+.dayhead .num{font-size:20px;font-weight:800;margin-top:2px}
+.dayhead.today{background:linear-gradient(180deg,#216bc8,#174a83)}
+.dayhead.today .dow,.dayhead.today .num{color:white}
+.todaylabel{font-size:9px;color:#c5e2ff;font-weight:800}
+.times{background:#101b2a;border-right:1px solid var(--line)}
+.time{height:64px;text-align:right;padding:0 10px;color:#849ab7;font-size:10px;transform:translateY(-7px)}
+.daycol{position:relative;border-right:1px solid #22354e;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 63px,#263952 63px,#263952 64px)}
+.daycol.today{background-color:#10223a}
+.slot{height:64px;cursor:pointer}
+.slot:hover{background:#347fd31c}
+.event{position:absolute;left:4px;right:4px;z-index:2;border-left:3px solid var(--c);border-radius:7px;padding:6px 7px;background:var(--bgc);color:white;overflow:hidden;cursor:pointer;min-height:25px}
+.event b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.event small{display:block;font-size:9px;color:#d5e3f6;margin-top:4px}
+.blue{--c:#58a5ff;--bgc:#174b80}
+.purple{--c:#bb91ff;--bgc:#4b3478}
+.teal{--c:#55d5c1;--bgc:#15594f}
+.orange{--c:#ffb76e;--bgc:#704622}
+.red{--c:#ff8195;--bgc:#713344}
+.legend{display:flex;flex-wrap:wrap;gap:17px;padding:13px 16px;border-top:1px solid var(--line);background:#101b2a;color:#a1b4cc;font-size:11px}
+.legend span{display:flex;align-items:center;gap:7px}
+.swatch{height:8px;width:8px;border-radius:3px}
+.foot{display:flex;justify-content:space-between;gap:12px;color:#657d9b;font-size:10px;margin-top:14px}
+.backdrop{position:fixed;inset:0;background:#02060dcc;display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.backdrop.open{display:flex}
+.modal{width:min(470px,100%);background:#111e30;border:1px solid #385574;border-radius:17px;padding:22px;box-shadow:0 25px 80px #000b}
+.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.modal h2{font-size:19px;margin:0}
+.close{background:none;border:0;color:#a8bad1;font-size:25px}
+.field{display:grid;gap:6px;margin:12px 0}
+.field label{font-size:11px;color:#afc1d8;font-weight:700}
+.field input,.field select,.field textarea{width:100%;background:#0a1524;border:1px solid #2b425f;color:#eef5ff;border-radius:9px;padding:10px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modalactions{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+.actionright{display:flex;gap:8px}
+@media(max-width:700px){.shell{padding:16px 11px 25px}.top{align-items:flex-start}.live{display:none}.intro{flex-direction:column}.toolbar{align-items:flex-start;flex-direction:column}.righttools{width:100%;justify-content:space-between}}
+</style>
+</head>
+<body>
+
+<div id="authPanel" style="min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% 0%,#1b3d6b 0,transparent 48%),var(--bg)">
+<form id="loginForm" class="modal" style="display:block;width:min(420px,100%);margin:auto">
+<div class="brand" style="margin-bottom:22px">
+<div class="logo">M</div>
+<div><b>MIRAGE</b><small>LEADERSHIP MANAGEMENT</small></div>
+</div>
+<h2 style="margin:0 0 6px">Leitungszugang</h2>
+<p style="color:var(--muted);font-size:12px">Melde dich mit deinem persönlichen Mirage-Zugang an.</p>
+<div class="field"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required placeholder="name@mirage.de"></div>
+<div class="field"><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Dein Passwort"></div>
+<button class="btn primary" type="submit" style="width:100%">Anmelden</button>
+<p id="authMessage" style="color:#ff9eac;font-size:12px;min-height:18px"></p>
+<p style="color:var(--muted);font-size:10px">Zugänge werden ausschließlich durch die Administration freigeschaltet.</p>
+</form>
+</div>
+
+<div class="shell" id="calendarApp" style="display:none">
+<header class="top">
+<div class="brand"><div class="logo">M</div><div><b>MIRAGE</b><small>LEADERSHIP MANAGEMENT</small></div></div>
+<div class="topright"><span class="live" id="userStatus">Zentral verbunden</span><button class="btn" id="logoutBtn">Abmelden</button><button class="btn primary" id="newTop">＋ Termin erstellen</button></div>
+</header>
+<section class="intro"><div><div class="eyebrow">Interner Bereich · Leitung</div><h1>Wochenkalender</h1><p>Alle wichtigen Termine der Mirage-Leitung auf einen Blick.</p></div></section>
+<div class="toolbar">
+<div class="nav"><button class="iconbtn" id="prev">‹</button><strong id="weekLabel"></strong><button class="iconbtn" id="next">›</button><button class="btn" id="todayBtn">Heute</button></div>
+<div class="righttools"><span class="tz">Europe/Berlin · 24-Stunden-Format</span><button class="btn primary" id="newToolbar">＋ Neuer Termin</button></div>
+</div>
+<div class="frame">
+<div class="calendar"><div class="headgrid" id="head"></div><div class="bodygrid" id="body"></div></div>
+<div class="legend">
+<span><i class="swatch" style="background:#58a5ff"></i> Geschäftsleitung</span>
+<span><i class="swatch" style="background:#bb91ff"></i> Team-Besprechung</span>
+<span><i class="swatch" style="background:#55d5c1"></i> Entwicklung</span>
+<span><i class="swatch" style="background:#ffb76e"></i> Sonstiges</span>
+<span><i class="swatch" style="background:#ff8195"></i> Wichtig / Dringend</span>
+</div>
+</div>
+<footer class="foot"><span>MIRAGE MANAGEMENT SYSTEM</span><span>Zentrale Mirage-Datenbank · Synchronisierung für alle berechtigten Nutzer</span></footer>
+</div>
+
+<div class="backdrop" id="backdrop">
+<form class="modal" id="form">
+<div class="modalhead"><h2 id="modalTitle">Neuen Termin erstellen</h2><button type="button" class="close" id="close">×</button></div>
+<input type="hidden" id="eventId">
+<div class="field"><label for="title">Termin / Bezeichnung</label><input id="title" maxlength="70" required placeholder="z. B. Leitungssitzung"></div>
+<div class="field"><label for="category">Kategorie</label><select id="category">
+<option value="blue">Geschäftsleitung</option><option value="purple">Team-Besprechung</option><option value="teal">Entwicklung</option><option value="orange">Sonstiges</option><option value="red">Wichtig / Dringend</option>
+</select></div>
+<div class="field"><label for="date">Datum</label><input id="date" type="date" required></div>
+<div class="twocol">
+<div class="field"><label for="start">Beginn</label><input id="start" type="time" value="19:00" required></div>
+<div class="field"><label for="end">Ende</label><input id="end" type="time" value="20:00" required></div>
+</div>
+<div class="field"><label for="description">Zusätzliche Informationen</label><textarea id="description" rows="3" maxlength="300"></textarea></div>
+<div class="modalactions">
+<button type="button" class="btn danger" id="delete" style="display:none">Löschen</button>
+<div class="actionright"><button type="button" class="btn" id="cancel">Abbrechen</button><button type="submit" class="btn primary">Speichern</button></div>
+</div>
+</form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// HIER DEINE SUPABASE-DATEN EINTRAGEN:
+const SUPABASE_URL = 'https://vtjqnpiwqxycgkwadhdz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_brju_vYbsJyfudsLig1JTA_tQnI8xcB';
+
+const START_HOUR=7,END_HOUR=24;
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+let offset=0,events=[],supabase=null,realtimeChannel=null,currentUser=null;
+
+function minutes(t){let [h,m]=String(t).slice(0,5).split(':').map(Number);return h*60+m}
+function monday(d){let x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
+function fmt(d,o){return new Intl.DateTimeFormat('de-DE',o).format(d)}
+function weekStart(){let d=monday(new Date());d.setDate(d.getDate()+offset*7);return d}
+function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function showAuth(message=''){$('authPanel').style.display='grid';$('calendarApp').style.display='none';$('authMessage').textContent=message}
+function showApp(){$('authPanel').style.display='none';$('calendarApp').style.display='block';$('userStatus').textContent=currentUser?.email||'Zentral verbunden'}
+
+async function init(){
+ if(!window.supabase){showAuth('Supabase konnte nicht geladen werden. Bitte Seite neu laden.');return}
+ if(SUPABASE_URL.startsWith('DEINE_')||SUPABASE_ANON_KEY.startsWith('DEIN_')){showAuth('Bitte zuerst Supabase-URL und Publishable Key eintragen.');return}
+ supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ const {data:{session},error}=await supabase.auth.getSession();
+ if(error){showAuth('Anmeldung konnte nicht geprüft werden: '+error.message);return}
+ if(session){currentUser=session.user;await enterCalendar()}else showAuth();
+ supabase.auth.onAuthStateChange(async(_event,session)=>{
+  if(session){currentUser=session.user;await enterCalendar()}
+  else{currentUser=null;events=[];if(realtimeChannel)await supabase.removeChannel(realtimeChannel);showAuth()}
+ });
+}
+
+async function enterCalendar(){showApp();await loadEvents();subscribeRealtime();render()}
+
+async function login(email,password){
+ $('authMessage').textContent='Anmeldung läuft …';
+ const {error}=await supabase.auth.signInWithPassword({email,password});
+ if(error)$('authMessage').textContent='Anmeldung fehlgeschlagen: '+error.message;
+}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();await login($('loginEmail').value.trim(),$('loginPassword').value)});
+$('logoutBtn').addEventListener('click',async()=>{if(confirm('Möchtest du dich wirklich abmelden?'))await supabase.auth.signOut()});
+
+async function loadEvents(){
+ if(!supabase||!currentUser)return;
+ const {data,error}=await supabase.from('mirage_events').select('*').order('event_date').order('start_time');
+ if(error){alert('Termine konnten nicht geladen werden: '+error.message);return}
+ events=(data||[]).map(row=>({id:row.id,title:row.title,category:row.category,date:row.event_date,start:String(row.start_time).slice(0,5),end:String(row.end_time).slice(0,5),description:row.description||''}));
+}
+
+function subscribeRealtime(){
+ if(realtimeChannel)supabase.removeChannel(realtimeChannel);
+ realtimeChannel=supabase.channel('mirage-calendar-live')
+ .on('postgres_changes',{event:'*',schema:'public',table:'mirage_events'},async()=>{await loadEvents();render()})
+ .subscribe();
+}
+
+function render(){
+ const mon=weekStart(),sun=new Date(mon);sun.setDate(sun.getDate()+6);
+ $('weekLabel').textContent=`${fmt(mon,{day:'2-digit',month:'long'})} – ${fmt(sun,{day:'2-digit',month:'long',year:'numeric'})}`;
+ const head=$('head'),body=$('body');head.innerHTML='<div class="blank"></div>';body.innerHTML='';
+ const days=[];
+ for(let i=0;i<7;i++){
+  let d=new Date(mon);d.setDate(d.getDate()+i);days.push(d);
+  let today=dateKey(d)===dateKey(new Date()),el=document.createElement('div');
+  el.className='dayhead'+(today?' today':'');
+  el.innerHTML=`<div class="dow">${fmt(d,{weekday:'short'}).toUpperCase()}</div><div class="num">${d.getDate()}</div>${today?'<div class="todaylabel">HEUTE</div>':''}`;
+  head.append(el);
+ }
+ let timeCol=document.createElement('div');timeCol.className='times';
+ for(let h=START_HOUR;h<END_HOUR;h++){let t=document.createElement('div');t.className='time';t.textContent=pad(h)+':00';timeCol.append(t)}
+ body.append(timeCol);
+ days.forEach(d=>{
+  let col=document.createElement('div');col.className='daycol'+(dateKey(d)===dateKey(new Date())?' today':'');
+  for(let h=START_HOUR;h<END_HOUR;h++){
+   let slot=document.createElement('div');slot.className='slot';slot.title='Klicken, um einen Termin einzutragen';
+   slot.addEventListener('click',()=>openForm({date:dateKey(d),start:`${pad(h)}:00`,end:`${h===23?'23:59':pad(h+1)+':00'}`}));
+   col.append(slot);
+  }
+  events.filter(e=>e.date===dateKey(d)).forEach(e=>{
+   let top=(minutes(e.start)-START_HOUR*60)/60*64,height=(minutes(e.end)-minutes(e.start))/60*64;
+   if(top<0||top>=(END_HOUR-START_HOUR)*64)return;
+   let box=document.createElement('div');box.className='event '+e.category;
+   box.style.top=top+'px';box.style.height=Math.max(27,height-3)+'px';
+   box.innerHTML=`<b>${escapeHTML(e.title)}</b><small>${e.start}–${e.end}${e.description?' · '+escapeHTML(e.description):''}</small>`;
+   box.addEventListener('click',ev=>{ev.stopPropagation();openForm(e)});
+   col.append(box);
+  });
+  body.append(col);
+ });
+}
+
+function openForm(e={}){
+ $('form').reset();$('eventId').value=e.id||'';
+ $('title').value=e.title||'';$('category').value=e.category||'blue';
+ $('date').value=e.date||dateKey(new Date());$('start').value=e.start||'19:00';
+ $('end').value=e.end||'20:00';$('description').value=e.description||'';
+ $('modalTitle').textContent=e.id?'Termin bearbeiten':'Neuen Termin erstellen';
+ $('delete').style.display=e.id?'inline-block':'none';
+ $('backdrop').classList.add('open');$('title').focus();
+}
+function closeForm(){$('backdrop').classList.remove('open')}
+
+$('form').addEventListener('submit',async ev=>{
+ ev.preventDefault();
+ let start=$('start').value,end=$('end').value;
+ if(minutes(end)<=minutes(start)){alert('Die Endzeit muss nach der Startzeit liegen.');return}
+ let id=$('eventId').value;
+ let item={title:$('title').value.trim(),category:$('category').value,event_date:$('date').value,start_time:start,end_time:end,description:$('description').value.trim(),created_by:currentUser.id};
+ if(!item.title||!item.event_date)return;
+ let result=id?await supabase.from('mirage_events').update(item).eq('id',id):await supabase.from('mirage_events').insert(item);
+ if(result.error){alert('Speichern fehlgeschlagen: '+result.error.message);return}
+ closeForm();await loadEvents();render();
+});
+
+$('delete').addEventListener('click',async()=>{
+ let id=$('eventId').value;
+ if(id&&confirm('Diesen Termin wirklich löschen?')){
+  let {error}=await supabase.from('mirage_events').delete().eq('id',id);
+  if(error){alert('Löschen fehlgeschlagen: '+error.message);return}
+  closeForm();await loadEvents();render();
+ }
+});
+
+$('prev').onclick=()=>{offset--;render()};
+$('next').onclick=()=>{offset++;render()};
+$('todayBtn').onclick=()=>{offset=0;render()};
+$('newTop').onclick=$('newToolbar').onclick=()=>openForm();
+$('close').onclick=$('cancel').onclick=closeForm;
+$('backdrop').addEventListener('click',e=>{if(e.target===$('backdrop'))closeForm()});
+
+let lastDate=dateKey(new Date());
+setInterval(()=>{
+ let now=dateKey(new Date());
+ if(now!==lastDate){lastDate=now;offset=0;render()}
+},30000);
+
+setInterval(async()=>{
+ if(currentUser&&!document.hidden){await loadEvents();render()}
+},60000);
+
+init();
+</script>
+</body>
+</html>
