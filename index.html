@@ -87,7 +87,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .auth-tabs button{flex:1}
 .auth-tabs .selected{background:#2466b2;border-color:#438ff5}
 
-/* NEUE BENUTZERVERWALTUNG */
+/* BENUTZERVERWALTUNG */
 .admin-panel{max-width:1050px;margin:0 auto 28px;background:#101b2b;border:1px solid #385574;border-radius:15px;padding:20px}
 #adminUsers{display:grid;gap:14px;margin-top:20px}
 .admin-row{display:flex;flex-direction:column;gap:17px;padding:19px;background:#14253b;border:1px solid #2c4564;border-radius:14px;min-width:0}
@@ -107,6 +107,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .admin-actions .btn{min-height:39px}
 .admin-owner-note{font-size:12px;color:#9db1ca}
 
+/* LIVE-TEAMSTATUS */
+.team-panel{background:#101b2b;border:1px solid #2c4564;border-radius:15px;padding:18px;margin-bottom:18px}
+.team-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.team-panel-head h2{font-size:16px;margin:0}
+.team-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.team-member{display:flex;align-items:center;gap:10px;padding:12px;background:#14253b;border:1px solid #2c4564;border-radius:12px;min-width:0}
+.team-avatar{width:35px;height:35px;flex-shrink:0;border-radius:50%;background:#1d477b;display:grid;place-items:center;color:#c4e1ff}
+.team-member-name{font-size:12px;font-weight:750;overflow-wrap:anywhere}
+.team-member-state{font-size:11px;color:#9db1ca;display:flex;align-items:center;gap:6px;margin-top:3px}
+.presence-dot{display:inline-block;width:9px;height:9px;flex-shrink:0;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px #ffffff0c}
+.presence-dot.online{background:#22c55e;box-shadow:0 0 9px #22c55e66}
+.presence-dot.away{background:#eab308;box-shadow:0 0 9px #eab30866}
+.presence-dot.offline{background:#ef4444}
+.admin-name-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
 /* BANNSEITE */
 #banPanel{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at top,#431524 0%,#080e18 55%)}
 .ban-card{width:min(560px,100%);background:#101827;border:1px solid #a93649;border-radius:20px;padding:35px 25px;text-align:center;box-shadow:0 20px 80px #0008}
@@ -115,15 +130,18 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .ban-description{color:#eef5ff;font-size:15px}
 .ban-timer{background:#351823;border:1px solid #a93649;border-radius:13px;padding:20px;margin:25px 0}
 .ban-timer-label{color:#ff8896;font-weight:800;margin-bottom:12px}
+.ban-choice{display:grid;gap:10px;margin:14px 0}
+.ban-choice label{color:#d5e3f6;font-size:12px;font-weight:700}
+.ban-choice select,.ban-choice input{width:100%;background:#0a1524;color:white;border:1px solid #70404c;border-radius:9px;padding:11px}
+.ban-note{color:#ff9eac;font-size:12px;min-height:18px}
+.ban-timer{background:#351823;border:1px solid #a93649;border-radius:13px;padding:20px;margin:25px 0}
+.ban-timer-label{color:#ff8896;font-weight:800;margin-bottom:12px}
 .ban-time{color:white;font-size:clamp(22px,5vw,33px);font-weight:900;letter-spacing:2px;font-variant-numeric:tabular-nums}
 .ban-time-labels{color:#c5a4ac;font-size:11px;margin-top:8px}
 .ban-contact{color:white;border-top:1px solid #34445c;padding-top:20px;margin-top:20px;font-size:13px}
 .ban-contact strong{color:#ff8896}
 .ban-form-title{color:#ff6576;margin-top:0}
-.ban-choice{display:grid;gap:10px;margin:14px 0}
-.ban-choice label{color:#d5e3f6;font-size:12px;font-weight:700}
-.ban-choice select,.ban-choice input{width:100%;background:#0a1524;color:white;border:1px solid #70404c;border-radius:9px;padding:11px}
-.ban-note{color:#ff9eac;font-size:12px;min-height:18px}
+
 @media(max-width:700px){
 .shell{padding:16px 11px 25px}
 .top{align-items:flex-start;flex-direction:column}
@@ -235,6 +253,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <p style="color:var(--muted)">Konten freigeben, Rollen vergeben, Aliase verwalten und Benutzer sperren.</p>
 <div id="adminUsers">Benutzer werden geladen …</div>
 <p id="adminMessage" style="color:#91a6c2"></p>
+</section>
+
+<section class="team-panel" id="teamPanel" aria-label="Mirage Teamstatus">
+<div class="team-panel-head">
+<h2>👥 Mirage Teamstatus</h2>
+<span class="tz" id="teamSummary">Status wird geladen …</span>
+</div>
+<div class="team-list" id="teamList">
+<span class="tz">Teammitglieder werden geladen …</span>
+</div>
 </section>
 
 <section class="intro">
@@ -355,13 +383,114 @@ const fmt=(d,opt)=>new Intl.DateTimeFormat('de-DE',opt).format(d);
 const minutes=t=>{const [h,m]=String(t).slice(0,5).split(':').map(Number);return h*60+m};
 const monday=d=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-(x.getDay()+6)%7);return x};
 const weekStart=()=>{const d=monday(new Date());d.setDate(d.getDate()+offset*7);return d};
-const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 let offset=0,events=[],supabaseClient=null,realtimeChannel=null;
 let currentUser=null,currentRole=null,currentAlias=null;
 let currentApproved=false,isOwner=false,passwordRecoveryActive=false;
 let authMode='login',enteringCalendar=false,checkingPermissions=false;
 let currentBan=null,banTarget=null,sessionVersion=0;
+
+let presenceRoster=[];
+let presenceLastActivity=Date.now();
+let presenceLastHeartbeat=0;
+let presenceBusy=false;
+const PRESENCE_INTERVAL=25000;
+
+function notePresenceActivity(){
+presenceLastActivity=Date.now();
+}
+['pointerdown','keydown','touchstart','wheel'].forEach(type=>
+document.addEventListener(type,notePresenceActivity,{passive:true})
+);
+
+function presenceStatus(user){
+return user.status==='online'?'online':user.status==='away'?'away':'offline';
+}
+function presenceLabel(status){
+return status==='online'?'Online':status==='away'?'Abwesend':'Offline';
+}
+function presenceDot(status){
+const el=document.createElement('span');
+el.className='presence-dot '+presenceStatus({status});
+el.title=presenceLabel(status);
+return el;
+}
+
+async function updatePresence(force=false){
+if(!supabaseClient||!currentUser||!currentApproved||isActiveBan(currentBan)||passwordRecoveryActive)return;
+if(presenceBusy)return;
+const now=Date.now();
+if(!force&&now-presenceLastHeartbeat<PRESENCE_INTERVAL-1000)return;
+const active=presenceLastActivity>presenceLastHeartbeat;
+presenceBusy=true;
+presenceLastHeartbeat=now;
+try{
+const {error:heartbeatError}=await supabaseClient.rpc('mirage_presence_heartbeat',{p_active:active});
+if(heartbeatError)throw heartbeatError;
+const {data,error}=await supabaseClient.rpc('mirage_presence_roster');
+if(error)throw error;
+presenceRoster=data||[];
+renderTeamStatus();
+if(isOwner&&$('adminPanel').style.display==='block')updateAdminPresenceDots();
+}catch(e){
+console.error('Teamstatus:',e);
+$('teamSummary').textContent='Teamstatus nicht verfügbar – Supabase-SQL prüfen';
+}finally{
+presenceBusy=false;
+}
+}
+
+function renderTeamStatus(){
+const target=$('teamList');
+if(!target)return;
+target.replaceChildren();
+const sorted=[...presenceRoster].sort((a,b)=>
+({online:0,away:1,offline:2}[a.status]??3)-
+({online:0,away:1,offline:2}[b.status]??3)||
+String(a.alias||'').localeCompare(String(b.alias||''),'de')
+);
+for(const user of sorted){
+const card=document.createElement('div');
+card.className='team-member';
+const avatar=document.createElement('div');
+avatar.className='team-avatar';
+avatar.textContent='👤';
+const info=document.createElement('div');
+info.style.minWidth='0';
+const name=document.createElement('div');
+name.className='team-member-name';
+name.textContent=user.alias||'Alias noch nicht vergeben';
+const state=document.createElement('div');
+state.className='team-member-state';
+state.append(presenceDot(user.status),document.createTextNode(presenceLabel(user.status)));
+info.append(name,state);
+card.append(avatar,info);
+target.append(card);
+}
+const online=sorted.filter(x=>x.status==='online').length;
+$('teamSummary').textContent=`${online} online · ${sorted.length} Mitglieder`;
+if(!sorted.length)target.textContent='Noch keine freigeschalteten Teammitglieder.';
+}
+
+function updateAdminPresenceDots(){
+const byId=new Map(presenceRoster.map(x=>[x.user_id,x.status]));
+$('adminUsers').querySelectorAll('[data-presence-user]').forEach(el=>{
+const status=byId.get(el.dataset.presenceUser)||'offline';
+el.className='presence-dot '+status;
+el.title=presenceLabel(status);
+});
+}
+
+async function leavePresence(){
+if(!supabaseClient||!currentUser)return;
+try{
+await supabaseClient.rpc('mirage_presence_leave');
+}catch(e){
+console.warn(e);
+}
+}
+setInterval(()=>updatePresence(),PRESENCE_INTERVAL);
 
 function isActiveBan(d){
 return !!(d?.banned_permanently||(d?.banned_until&&new Date(d.banned_until).getTime()>Date.now()));
@@ -375,25 +504,40 @@ $('backdrop').classList.remove('open');
 $('banBackdrop').classList.remove('open');
 }
 function showAuth(message=''){
-hideAllPanels();$('authPanel').style.display='grid';$('authMessage').textContent=message;
+hideAllPanels();
+$('authPanel').style.display='grid';
+$('authMessage').textContent=message;
 }
 function showPending(message=''){
-hideAllPanels();$('pendingPanel').style.display='grid';$('pendingMessage').textContent=message;
+hideAllPanels();
+$('pendingPanel').style.display='grid';
+$('pendingMessage').textContent=message;
 }
 function showApp(){
 for(const id of ['authPanel','pendingPanel','banPanel','resetPanel'])$(id).style.display='none';
 $('calendarApp').style.display='block';
+renderTeamStatus();
 $('userStatus').textContent='👤 '+(currentAlias||'Alias noch nicht vergeben');
 $('adminBtn').style.display=isOwner?'inline-block':'none';
 $('newTop').style.display=canEdit()?'inline-block':'none';
 $('newToolbar').style.display=canEdit()?'inline-block':'none';
 }
 function stopRealtime(){
-if(realtimeChannel&&supabaseClient){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null}
+if(realtimeChannel&&supabaseClient){
+supabaseClient.removeChannel(realtimeChannel);
+realtimeChannel=null;
+}
 }
 function showBan(d){
-currentBan=d;currentApproved=false;isOwner=false;events=[];
-stopRealtime();hideAllPanels();$('banPanel').style.display='flex';updateBanCountdown();
+currentBan=d;
+currentApproved=false;
+isOwner=false;
+events=[];
+stopRealtime();
+presenceRoster=[];
+hideAllPanels();
+$('banPanel').style.display='flex';
+updateBanCountdown();
 }
 function updateBanCountdown(){
 if($('banPanel').style.display!=='flex'||!currentBan)return;
@@ -401,7 +545,8 @@ if(currentBan.banned_permanently){
 $('banTimerTitle').textContent='Art der Sperre';
 $('banCountdown').textContent='PERMANENT GESPERRT';
 $('banTimerLabels').textContent='Diese Sperre hat kein automatisches Ablaufdatum.';
-$('banExpires').textContent='';return;
+$('banExpires').textContent='';
+return;
 }
 const end=new Date(currentBan.banned_until).getTime();
 if(!Number.isFinite(end))return;
@@ -409,7 +554,8 @@ const total=Math.max(0,Math.ceil((end-Date.now())/1000));
 if(total===0){
 $('banCountdown').textContent='00 : 00 : 00 : 00';
 $('banStatusMessage').textContent='Sperrdauer abgelaufen. Zugang wird geprüft …';
-checkPermissions();return;
+checkPermissions();
+return;
 }
 const days=Math.floor(total/86400),hours=Math.floor(total%86400/3600);
 const mins=Math.floor(total%3600/60),secs=total%60;
@@ -439,7 +585,10 @@ $('authMessage').textContent='';
 }
 
 async function init(){
-if(!window.supabase){showAuth('Supabase konnte nicht geladen werden.');return}
+if(!window.supabase){
+showAuth('Supabase konnte nicht geladen werden.');
+return;
+}
 supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
 auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
 });
@@ -448,26 +597,48 @@ const hash=new URLSearchParams(location.hash.slice(1));
 passwordRecoveryActive=query.get('type')==='recovery'||hash.get('type')==='recovery';
 supabaseClient.auth.onAuthStateChange((event,session)=>{
 if(event==='PASSWORD_RECOVERY'){
-passwordRecoveryActive=true;currentUser=session?.user||null;
-hideAllPanels();$('resetPanel').style.display='grid';return;
+passwordRecoveryActive=true;
+currentUser=session?.user||null;
+hideAllPanels();
+$('resetPanel').style.display='grid';
+return;
 }
 if(passwordRecoveryActive)return;
 if(event==='SIGNED_OUT'){
-sessionVersion++;currentUser=null;currentRole=null;currentAlias=null;
-currentApproved=false;currentBan=null;isOwner=false;events=[];
-stopRealtime();showAuth();return;
+sessionVersion++;
+currentUser=null;
+currentRole=null;
+currentAlias=null;
+currentApproved=false;
+currentBan=null;
+isOwner=false;
+events=[];
+stopRealtime();
+presenceRoster=[];
+showAuth();
+return;
 }
 if(event==='SIGNED_IN'&&session){
 const changed=currentUser?.id!==session.user.id;
-currentUser=session.user;if(changed)sessionVersion++;
+currentUser=session.user;
+if(changed)sessionVersion++;
 setTimeout(()=>{if(!passwordRecoveryActive)enterCalendar()},0);
 }
 });
 const {data,error}=await supabaseClient.auth.getSession();
-if(error){showAuth(error.message);return}
-if(passwordRecoveryActive){hideAllPanels();$('resetPanel').style.display='grid';return}
-if(data.session){currentUser=data.session.user;await enterCalendar()}
-else showAuth();
+if(error){
+showAuth(error.message);
+return;
+}
+if(passwordRecoveryActive){
+hideAllPanels();
+$('resetPanel').style.display='grid';
+return;
+}
+if(data.session){
+currentUser=data.session.user;
+await enterCalendar();
+}else showAuth();
 }
 
 async function fetchPermissions(){
@@ -486,6 +657,7 @@ currentBan=d;
 isOwner=currentApproved&&!isActiveBan(d)&&currentRole==='projektleitung'
 &&currentUser?.email?.toLowerCase()===OWNER_EMAIL.toLowerCase();
 }
+
 async function enterCalendar(){
 if(passwordRecoveryActive||!currentUser||enteringCalendar)return;
 enteringCalendar=true;
@@ -494,38 +666,76 @@ try{
 const d=await fetchPermissions();
 if(version!==sessionVersion||!currentUser)return;
 assignPermissions(d);
-if(isActiveBan(d)){showBan(d);return}
-if(!currentApproved){stopRealtime();events=[];showPending();return}
-showApp();await loadEvents();
-if(version!==sessionVersion)return;
-subscribeRealtime();render();
-}catch(e){
-stopRealtime();events=[];currentApproved=false;
-hideAllPanels();$('authPanel').style.display='grid';
-$('authMessage').textContent='Berechtigung konnte nicht geprüft werden: '+e.message;
-}finally{enteringCalendar=false}
+if(isActiveBan(d)){
+showBan(d);
+return;
 }
+if(!currentApproved){
+stopRealtime();
+presenceRoster=[];
+events=[];
+showPending();
+return;
+}
+showApp();
+updatePresence(true);
+await loadEvents();
+if(version!==sessionVersion)return;
+subscribeRealtime();
+render();
+}catch(e){
+stopRealtime();
+events=[];
+currentApproved=false;
+hideAllPanels();
+$('authPanel').style.display='grid';
+$('authMessage').textContent='Berechtigung konnte nicht geprüft werden: '+e.message;
+}finally{
+enteringCalendar=false;
+}
+}
+
 async function checkPermissions(){
 if(checkingPermissions||enteringCalendar||!currentUser||passwordRecoveryActive)return;
-checkingPermissions=true;const version=sessionVersion;
+checkingPermissions=true;
+const version=sessionVersion;
 try{
 const d=await fetchPermissions();
 if(version!==sessionVersion||!currentUser)return;
 const previousRole=currentRole;
 const wasHidden=$('calendarApp').style.display==='none';
 assignPermissions(d);
-if(isActiveBan(d)){showBan(d);return}
-if(!currentApproved){stopRealtime();events=[];showPending();return}
+if(isActiveBan(d)){
+showBan(d);
+return;
+}
+if(!currentApproved){
+stopRealtime();
+presenceRoster=[];
+events=[];
+showPending();
+return;
+}
 showApp();
-if(wasHidden){await loadEvents();subscribeRealtime();render()}
-else if(previousRole!==currentRole)render();
+if(wasHidden){
+updatePresence(true);
+await loadEvents();
+subscribeRealtime();
+render();
+}else if(previousRole!==currentRole)render();
 if(!isOwner)$('adminPanel').style.display='none';
-}catch(e){console.error('Berechtigungsprüfung:',e)}
-finally{checkingPermissions=false}
+}catch(e){
+console.error('Berechtigungsprüfung:',e);
+}finally{
+checkingPermissions=false;
+}
 }
 setInterval(()=>{if(currentUser&&!passwordRecoveryActive)checkPermissions()},10000);
 document.addEventListener('visibilitychange',()=>{
-if(!document.hidden&&currentUser)checkPermissions();
+if(!document.hidden&&currentUser){
+checkPermissions();
+updatePresence(true);
+}
 });
 
 /* ANMELDUNG */
@@ -543,18 +753,27 @@ const {data,error}=await supabaseClient.auth.signUp({
 email,password,options:{emailRedirectTo:location.origin+location.pathname}
 });
 if(error)throw error;
-if(data.session&&data.user){currentUser=data.user;await enterCalendar()}
-else $('authMessage').textContent='Registriert. Bitte E-Mail bestätigen und auf Freigabe warten.';
+if(data.session&&data.user){
+currentUser=data.user;
+await enterCalendar();
+}else $('authMessage').textContent='Registriert. Bitte E-Mail bestätigen und auf Freigabe warten.';
 }else{
 const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
 if(error)throw error;
 currentUser=data.user||data.session?.user;
 await enterCalendar();
 }
-}catch(err){$('authMessage').textContent='Fehler: '+err.message}
-finally{$('authSubmit').disabled=false}
+}catch(err){
+$('authMessage').textContent='Fehler: '+err.message;
+}finally{
+$('authSubmit').disabled=false;
+}
 });
-async function logout(){await supabaseClient.auth.signOut()}
+
+async function logout(){
+await leavePresence();
+await supabaseClient.auth.signOut();
+}
 $('pendingLogout').onclick=logout;
 $('banLogout').onclick=logout;
 $('logoutBtn').onclick=()=>{if(confirm('Wirklich abmelden?'))logout()};
@@ -572,7 +791,10 @@ const version=sessionVersion;
 const {data,error}=await supabaseClient.from('mirage_events').select('*')
 .order('event_date').order('start_time');
 if(version!==sessionVersion)return;
-if(error){console.error(error);return}
+if(error){
+console.error(error);
+return;
+}
 events=(data||[]).map(r=>({
 id:r.id,title:r.title,category:r.category,date:r.event_date,
 start:String(r.start_time).slice(0,5),end:String(r.end_time).slice(0,5),
@@ -585,7 +807,8 @@ realtimeChannel=supabaseClient.channel('mirage-calendar-live')
 .on('postgres_changes',{event:'*',schema:'public',table:'mirage_events'},async()=>{
 await checkPermissions();
 if(!currentApproved||isActiveBan(currentBan))return;
-await loadEvents();render();
+await loadEvents();
+render();
 }).subscribe();
 }
 function render(){
@@ -600,7 +823,9 @@ head.innerHTML='<div class="blank"></div>';
 body.innerHTML='';
 const days=[];
 for(let i=0;i<7;i++){
-const d=new Date(mon);d.setDate(d.getDate()+i);days.push(d);
+const d=new Date(mon);
+d.setDate(d.getDate()+i);
+days.push(d);
 const today=dateKey(d)===dateKey(new Date());
 const el=document.createElement('div');
 el.className='dayhead'+(today?' today':'');
@@ -609,10 +834,13 @@ el.innerHTML='<div class="dow">'+fmt(d,{weekday:'short'}).toUpperCase()+'</div>'
 (today?'<div class="todaylabel">HEUTE</div>':'');
 head.append(el);
 }
-const timeCol=document.createElement('div');timeCol.className='times';
+const timeCol=document.createElement('div');
+timeCol.className='times';
 for(let h=START_HOUR;h<END_HOUR;h++){
-const t=document.createElement('div');t.className='time';
-t.textContent=pad(h)+':00';timeCol.append(t);
+const t=document.createElement('div');
+t.className='time';
+t.textContent=pad(h)+':00';
+timeCol.append(t);
 }
 body.append(timeCol);
 days.forEach(d=>{
@@ -632,7 +860,8 @@ const height=(minutes(e.end)-minutes(e.start))/60*64;
 if(top<0||top>=(END_HOUR-START_HOUR)*64)return;
 const box=document.createElement('div');
 box.className='event '+e.category;
-box.style.top=top+'px';box.style.height=Math.max(27,height-3)+'px';
+box.style.top=top+'px';
+box.style.height=Math.max(27,height-3)+'px';
 box.innerHTML='<b>'+escapeHTML(e.title)+'</b><small>'+
 e.start+'–'+e.end+
 (e.description?' · '+escapeHTML(e.description):'')+'</small>';
@@ -661,32 +890,51 @@ $('modalTitle').textContent=e.id?'Termin bearbeiten':'Neuen Termin erstellen';
 $('delete').style.display=e.id?'inline-block':'none';
 $('backdrop').classList.add('open');
 }
-function closeForm(){$('backdrop').classList.remove('open')}
+function closeForm(){
+$('backdrop').classList.remove('open');
+}
 $('form').addEventListener('submit',async ev=>{
-ev.preventDefault();await checkPermissions();if(!canEdit())return;
+ev.preventDefault();
+await checkPermissions();
+if(!canEdit())return;
 if(minutes($('end').value)<=minutes($('start').value)){
-alert('Endzeit muss nach Startzeit liegen.');return;
+alert('Endzeit muss nach Startzeit liegen.');
+return;
 }
 const id=$('eventId').value;
 const item={
-title:$('title').value.trim(),category:$('category').value,
-event_date:$('date').value,start_time:$('start').value,
-end_time:$('end').value,description:$('description').value.trim()
+title:$('title').value.trim(),
+category:$('category').value,
+event_date:$('date').value,
+start_time:$('start').value,
+end_time:$('end').value,
+description:$('description').value.trim()
 };
 if(!item.title||!item.event_date)return;
 const result=id
 ?await supabaseClient.from('mirage_events').update(item).eq('id',id)
 :await supabaseClient.from('mirage_events').insert({...item,created_by:currentUser.id});
-if(result.error){alert('Fehler: '+result.error.message);return}
-closeForm();await loadEvents();render();
+if(result.error){
+alert('Fehler: '+result.error.message);
+return;
+}
+closeForm();
+await loadEvents();
+render();
 });
 $('delete').onclick=async()=>{
-await checkPermissions();if(!canEdit())return;
+await checkPermissions();
+if(!canEdit())return;
 const id=$('eventId').value;
 if(id&&confirm('Termin wirklich löschen?')){
 const {error}=await supabaseClient.from('mirage_events').delete().eq('id',id);
-if(error){alert(error.message);return}
-closeForm();await loadEvents();render();
+if(error){
+alert(error.message);
+return;
+}
+closeForm();
+await loadEvents();
+render();
 }
 };
 $('prev').onclick=()=>{offset--;render()};
@@ -700,19 +948,29 @@ $('backdrop').onclick=e=>{if(e.target===$('backdrop'))closeForm()};
 let lastDate=dateKey(new Date());
 setInterval(()=>{
 const now=dateKey(new Date());
-if(now!==lastDate){lastDate=now;offset=0;if(currentApproved)render()}
+if(now!==lastDate){
+lastDate=now;
+offset=0;
+if(currentApproved)render();
+}
 },30000);
 setInterval(async()=>{
 if(currentUser&&currentApproved&&!document.hidden){
 await checkPermissions();
-if(currentApproved&&!isActiveBan(currentBan)){await loadEvents();render()}
+if(currentApproved&&!isActiveBan(currentBan)){
+await loadEvents();
+render();
+}
 }
 },60000);
 
 /* PASSWORT */
 $('forgotPasswordBtn').onclick=async()=>{
 const email=$('loginEmail').value.trim();
-if(!email){$('authMessage').textContent='Bitte E-Mail-Adresse eingeben.';return}
+if(!email){
+$('authMessage').textContent='Bitte E-Mail-Adresse eingeben.';
+return;
+}
 const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
 redirectTo:location.origin+location.pathname
 });
@@ -723,14 +981,25 @@ $('resetPasswordForm').addEventListener('submit',async e=>{
 e.preventDefault();
 const password=$('newPassword').value;
 if(password!==$('confirmPassword').value){
-$('resetMessage').textContent='Passwörter stimmen nicht überein.';return;
+$('resetMessage').textContent='Passwörter stimmen nicht überein.';
+return;
 }
-if(password.length<8){$('resetMessage').textContent='Mindestens 8 Zeichen erforderlich.';return}
+if(password.length<8){
+$('resetMessage').textContent='Mindestens 8 Zeichen erforderlich.';
+return;
+}
 const {error}=await supabaseClient.auth.updateUser({password});
-if(error){$('resetMessage').textContent=error.message;return}
+if(error){
+$('resetMessage').textContent=error.message;
+return;
+}
 const {error:signOutError}=await supabaseClient.auth.signOut();
-if(signOutError){$('resetMessage').textContent=signOutError.message;return}
-passwordRecoveryActive=false;currentUser=null;
+if(signOutError){
+$('resetMessage').textContent=signOutError.message;
+return;
+}
+passwordRecoveryActive=false;
+currentUser=null;
 history.replaceState({},'',location.pathname);
 showAuth('Passwort geändert. Bitte erneut anmelden.');
 });
@@ -739,23 +1008,28 @@ showAuth('Passwort geändert. Bitte erneut anmelden.');
 $('adminBtn').onclick=async()=>{
 if(!isOwner)return;
 $('adminPanel').style.display='block';
+await updatePresence(true);
 await loadAdminUsers();
 $('adminPanel').scrollIntoView({behavior:'smooth'});
 };
-$('adminClose').onclick=()=>{$('adminPanel').style.display='none'};
+$('adminClose').onclick=()=>{
+$('adminPanel').style.display='none';
+};
 
 /* BANNS */
 function openBanModal(user){
 if(!isOwner||user.user_id===currentUser.id)return;
 banTarget=user;
 $('banTargetEmail').textContent=user.alias||user.email||'Unbekannt';
-$('banType').value='temporary';$('banDays').value='7';
+$('banType').value='temporary';
+$('banDays').value='7';
 $('banDaysField').style.display='grid';
 $('banModalMessage').textContent='';
 $('banBackdrop').classList.add('open');
 }
 function closeBanModal(){
-$('banBackdrop').classList.remove('open');banTarget=null;
+$('banBackdrop').classList.remove('open');
+banTarget=null;
 }
 $('banType').onchange=()=>{
 const temp=$('banType').value==='temporary';
@@ -764,21 +1038,29 @@ $('banDays').required=temp;
 };
 $('banModalClose').onclick=closeBanModal;
 $('banModalCancel').onclick=closeBanModal;
-$('banBackdrop').onclick=e=>{if(e.target===$('banBackdrop'))closeBanModal()};
+$('banBackdrop').onclick=e=>{
+if(e.target===$('banBackdrop'))closeBanModal();
+};
 $('banConfirm').onclick=async()=>{
 if(!isOwner||!banTarget)return;
 const type=$('banType').value,days=Number($('banDays').value);
 if(type==='temporary'&&(!Number.isInteger(days)||days<1||days>36500)){
-$('banModalMessage').textContent='Ungültige Anzahl an Tagen.';return;
+$('banModalMessage').textContent='Ungültige Anzahl an Tagen.';
+return;
 }
 if(!confirm(type==='permanent'?'Benutzer permanent bannen?':
 `Benutzer für ${days} Tage bannen?`))return;
 $('banConfirm').disabled=true;
 const {error}=await supabaseClient.rpc('mirage_admin_set_ban',{
-p_user_id:banTarget.user_id,p_ban_type:type,p_days:type==='temporary'?days:null
+p_user_id:banTarget.user_id,
+p_ban_type:type,
+p_days:type==='temporary'?days:null
 });
 $('banConfirm').disabled=false;
-if(error){$('banModalMessage').textContent=error.message;return}
+if(error){
+$('banModalMessage').textContent=error.message;
+return;
+}
 closeBanModal();
 $('adminMessage').textContent='Benutzer erfolgreich gebannt.';
 await loadAdminUsers();
@@ -787,20 +1069,28 @@ async function unbanUser(user){
 if(!isOwner||user.user_id===currentUser.id)return;
 if(!confirm('Bann für '+(user.alias||user.email)+' aufheben?'))return;
 const {error}=await supabaseClient.rpc('mirage_admin_set_ban',{
-p_user_id:user.user_id,p_ban_type:'unban',p_days:null
+p_user_id:user.user_id,
+p_ban_type:'unban',
+p_days:null
 });
-if(error){$('adminMessage').textContent=error.message;return}
+if(error){
+$('adminMessage').textContent=error.message;
+return;
+}
 await loadAdminUsers();
 $('adminMessage').textContent='Bann erfolgreich aufgehoben.';
 }
 
-/* NEUE BENUTZERKARTEN */
+/* BENUTZERKARTEN */
 async function loadAdminUsers(){
 if(!isOwner)return;
 const target=$('adminUsers');
 target.textContent='Benutzer werden geladen …';
 const {data,error}=await supabaseClient.rpc('mirage_admin_list_users');
-if(error){target.textContent='Fehler: '+error.message;return}
+if(error){
+target.textContent='Fehler: '+error.message;
+return;
+}
 target.innerHTML='';
 for(const user of data||[]){
 const own=user.user_id===currentUser.id;
@@ -817,13 +1107,20 @@ avatar.className='admin-avatar';
 avatar.textContent=own?'♛':'♙';
 
 const names=document.createElement('div');
+const nameLine=document.createElement('div');
+nameLine.className='admin-name-line';
 const displayName=document.createElement('div');
 displayName.className='admin-name';
 displayName.textContent=user.alias?.trim()||'Alias noch nicht vergeben';
+const statusDot=presenceDot(
+presenceRoster.find(x=>x.user_id===user.user_id)?.status||'offline'
+);
+statusDot.dataset.presenceUser=user.user_id;
+nameLine.append(displayName,statusDot);
 const email=document.createElement('div');
 email.className='admin-email';
 email.textContent=user.email||'Ohne E-Mail';
-names.append(displayName,email);
+names.append(nameLine,email);
 identity.append(avatar,names);
 
 const state=document.createElement('div');
@@ -852,7 +1149,8 @@ const aliasLabel=document.createElement('label');
 aliasLabel.textContent='Benutzeralias';
 const aliasInput=document.createElement('input');
 aliasInput.type='text';
-aliasInput.minLength=2;aliasInput.maxLength=40;
+aliasInput.minLength=2;
+aliasInput.maxLength=40;
 aliasInput.placeholder='Alias vergeben';
 aliasInput.value=user.alias||'';
 aliasField.append(aliasLabel,aliasInput);
@@ -868,7 +1166,9 @@ for(const [value,label] of [
 ['projektleitung','Projektleitung']
 ]){
 const opt=document.createElement('option');
-opt.value=value;opt.textContent=label;select.append(opt);
+opt.value=value;
+opt.textContent=label;
+select.append(opt);
 }
 select.value=user.role||'zuschauer';
 select.disabled=own;
@@ -884,17 +1184,23 @@ aliasSave.textContent='Alias speichern';
 aliasSave.onclick=async()=>{
 const value=aliasInput.value.trim();
 if(value.length<2||value.length>40){
-$('adminMessage').textContent='Alias muss 2 bis 40 Zeichen haben.';return;
+$('adminMessage').textContent='Alias muss 2 bis 40 Zeichen haben.';
+return;
 }
 aliasSave.disabled=true;
 const {error}=await supabaseClient.rpc('mirage_admin_set_alias',{
-p_user_id:user.user_id,p_alias:value
+p_user_id:user.user_id,
+p_alias:value
 });
 if(error){
 $('adminMessage').textContent='Fehler: '+error.message;
-aliasSave.disabled=false;return;
+aliasSave.disabled=false;
+return;
 }
-if(own){currentAlias=value;showApp()}
+if(own){
+currentAlias=value;
+showApp();
+}
 await loadAdminUsers();
 $('adminMessage').textContent='Alias gespeichert.';
 };
@@ -907,20 +1213,26 @@ note.textContent='♛ Eigentümer · Rang und Freigabe geschützt';
 actions.append(note);
 }else{
 const save=document.createElement('button');
-save.className='btn';save.textContent='Rolle speichern';
+save.className='btn';
+save.textContent='Rolle speichern';
 
 const approvalButton=document.createElement('button');
 approvalButton.className='btn '+(user.approved?'danger':'primary');
 approvalButton.textContent=user.approved?'Freigabe entziehen':'Freigeben';
 
 async function change(approved){
-approvalButton.disabled=true;save.disabled=true;
+approvalButton.disabled=true;
+save.disabled=true;
 const {error}=await supabaseClient.rpc('mirage_admin_set_user',{
-p_user_id:user.user_id,p_role:select.value,p_approved:approved
+p_user_id:user.user_id,
+p_role:select.value,
+p_approved:approved
 });
 if(error){
 $('adminMessage').textContent='Fehler: '+error.message;
-approvalButton.disabled=false;save.disabled=false;return;
+approvalButton.disabled=false;
+save.disabled=false;
+return;
 }
 await loadAdminUsers();
 $('adminMessage').textContent='Änderung gespeichert.';
