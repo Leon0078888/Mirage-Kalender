@@ -806,7 +806,9 @@ return;
 }
 target.replaceChildren();
 for(const entry of data||[]){
-const own=entry.user_id===user.id;
+const own =
+  String(entry.email || '').trim().toLowerCase() ===
+  OWNER_EMAIL.toLowerCase();
 const banned=activeBan(entry);
 const row=document.createElement('article');
 row.className='adminrow';
