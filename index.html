@@ -7,136 +7,57 @@
 <meta name="theme-color" content="#0a1220">
 <title>Mirage Kalender</title>
 <style>
-:root{
-  --bg:#080e18;
-  --panel:#101b2b;
-  --panel2:#14243a;
-  --line:#253a55;
-  --muted:#91a6c2;
-  --text:#eef5ff;
-  --blue:#2879ed;
-}
+:root{--bg:#080e18;--panel:#101b2b;--line:#253a55;--muted:#91a6c2;--text:#eef5ff}
 *{box-sizing:border-box}
-body{
-  margin:0;
-  background:radial-gradient(ellipse at 78% -15%,#1b3d6b 0,transparent 38%),var(--bg);
-  color:var(--text);
-  font:14px/1.45 Inter,system-ui,sans-serif;
-}
+body{margin:0;background:radial-gradient(ellipse at 78% -15%,#1b3d6b 0,transparent 38%),var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}
 button,input,textarea,select{font:inherit}
 button{cursor:pointer}
 button:disabled{opacity:.5;cursor:not-allowed}
 .shell{max-width:1600px;margin:auto;padding:25px 28px 36px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:28px}
-.brand{display:flex;align-items:center;gap:13px}
-.logo{
-  width:46px;height:46px;border:1px solid #438ce7;border-radius:13px;
-  background:linear-gradient(145deg,#2466b2,#10243f);
-  display:grid;place-items:center;font-size:22px;font-weight:900;
-}
+.top,.intro,.toolbar,.modalhead{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.top{margin-bottom:28px}
+.brand,.topright,.nav,.righttools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:46px;height:46px;border:1px solid #438ce7;border-radius:13px;background:linear-gradient(145deg,#2466b2,#10243f);display:grid;place-items:center;font-size:22px;font-weight:900}
 .brand b{font-size:21px;letter-spacing:4px}
-.brand small{
-  display:block;color:#7eafea;font-size:10px;
-  letter-spacing:2px;font-weight:750;margin-top:1px;
-}
-.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand small{display:block;color:#7eafea;font-size:10px;letter-spacing:2px;font-weight:750}
 .live{color:#adc2dc;font-size:12px}
-.live:before{
-  content:"";display:inline-block;width:7px;height:7px;
-  border-radius:50%;background:#35d69a;margin-right:8px;
-}
-.btn{
-  border:1px solid var(--line);background:#15253b;color:var(--text);
-  padding:10px 14px;border-radius:10px;font-weight:650;
-}
+.live:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#35d69a;margin-right:8px}
+.btn{border:1px solid var(--line);background:#15253b;color:var(--text);padding:10px 14px;border-radius:10px;font-weight:650}
 .btn:hover{border-color:#5796ec;background:#1a3455}
-.btn.primary{
-  background:linear-gradient(135deg,#2b80f3,#1659bb);
-  border-color:#438ff5;
-}
+.btn.primary{background:linear-gradient(135deg,#2b80f3,#1659bb);border-color:#438ff5}
 .btn.danger{color:#ff9eac;border-color:#70404c;background:#321e29}
-.btn.ban{
-  background:#dc2626;color:white;
-  border:1px solid #ff4c58;font-weight:800;
-}
+.btn.ban{background:#dc2626;color:#fff;border-color:#ff4c58;font-weight:800}
 .btn.ban:hover{background:#b91c1c}
-.intro{
-  display:flex;justify-content:space-between;
-  align-items:flex-end;margin-bottom:17px;gap:15px;
-}
-.eyebrow{
-  color:#79b0f6;text-transform:uppercase;
-  letter-spacing:2px;font-size:10px;font-weight:800;
-}
+.eyebrow{color:#79b0f6;text-transform:uppercase;letter-spacing:2px;font-size:10px;font-weight:800}
+.intro{margin-bottom:17px}
 .intro h1{font-size:27px;margin:4px 0}
 .intro p{margin:0;color:var(--muted);font-size:13px}
-.toolbar{
-  display:flex;justify-content:space-between;align-items:center;gap:12px;
-  padding:13px 15px;background:#101b2bdd;border:1px solid var(--line);
-  border-radius:15px 15px 0 0;
-}
-.nav{display:flex;align-items:center;gap:9px}
+.toolbar{padding:13px 15px;background:#101b2bdd;border:1px solid var(--line);border-radius:15px 15px 0 0}
 .nav strong{min-width:205px;text-align:center}
-.iconbtn{
-  height:35px;width:35px;border:1px solid var(--line);
-  border-radius:9px;background:#172840;color:#e5f0ff;font-size:20px;
-}
-.righttools{display:flex;align-items:center;gap:10px}
+.iconbtn{height:35px;width:35px;border:1px solid var(--line);border-radius:9px;background:#172840;color:#e5f0ff;font-size:20px}
 .tz{font-size:11px;color:var(--muted)}
-.frame{
-  overflow:auto;border:1px solid var(--line);border-top:0;
-  border-radius:0 0 15px 15px;background:#0d1725;
-}
+.frame{overflow:auto;border:1px solid var(--line);border-top:0;border-radius:0 0 15px 15px;background:#0d1725}
 .calendar{min-width:950px}
-.headgrid,.bodygrid{
-  display:grid;
-  grid-template-columns:76px repeat(7,minmax(115px,1fr));
-}
-.headgrid{
-  position:sticky;top:0;z-index:5;
-  background:#122035;border-bottom:1px solid var(--line);
-}
+.headgrid,.bodygrid{display:grid;grid-template-columns:76px repeat(7,minmax(115px,1fr))}
+.headgrid{position:sticky;top:0;z-index:5;background:#122035;border-bottom:1px solid var(--line)}
 .blank{border-right:1px solid var(--line)}
-.dayhead{
-  text-align:center;padding:10px 5px 9px;
-  border-right:1px solid #243750;min-height:68px;
-}
-.dayhead .dow{
-  font-size:10px;color:#93a9c5;font-weight:800;letter-spacing:1.4px;
-}
-.dayhead .num{font-size:20px;font-weight:800;margin-top:2px}
+.dayhead{text-align:center;padding:10px 5px 9px;border-right:1px solid #243750;min-height:68px}
+.dayhead .dow{font-size:10px;color:#93a9c5;font-weight:800;letter-spacing:1.4px}
+.dayhead .num{font-size:20px;font-weight:800}
 .dayhead.today{background:linear-gradient(180deg,#216bc8,#174a83)}
-.dayhead.today .dow,.dayhead.today .num{color:white}
+.dayhead.today .dow,.dayhead.today .num{color:#fff}
 .todaylabel{font-size:9px;color:#c5e2ff;font-weight:800}
 .times{background:#101b2a;border-right:1px solid var(--line)}
-.time{
-  height:64px;text-align:right;padding:0 10px;
-  color:#849ab7;font-size:10px;transform:translateY(-7px);
-}
-.daycol{
-  position:relative;border-right:1px solid #22354e;
-  background-image:repeating-linear-gradient(
-    to bottom,transparent 0,transparent 63px,#263952 63px,#263952 64px
-  );
-}
+.time{height:64px;text-align:right;padding:0 10px;color:#849ab7;font-size:10px;transform:translateY(-7px)}
+.daycol{position:relative;border-right:1px solid #22354e;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 63px,#263952 63px,#263952 64px)}
 .daycol.today{background-color:#10223a}
 .slot{height:64px;cursor:pointer}
 .slot:hover{background:#347fd31c}
 .slot.readonly{cursor:default}
 .slot.readonly:hover{background:transparent}
-.event{
-  position:absolute;left:4px;right:4px;z-index:2;
-  border-left:3px solid var(--c);border-radius:7px;
-  padding:6px 7px;background:var(--bgc);
-  color:white;overflow:hidden;cursor:pointer;min-height:25px;
-}
-.event b{
-  display:block;font-size:11px;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;
-}
-.event small{
-  display:block;font-size:9px;color:#d5e3f6;margin-top:4px;
-}
+.event{position:absolute;left:4px;right:4px;z-index:2;border-left:3px solid var(--c);border-radius:7px;padding:6px 7px;background:var(--bgc);color:white;overflow:hidden;cursor:pointer;min-height:25px}
+.event b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.event small{display:block;font-size:9px;color:#d5e3f6;margin-top:4px}
 .blue{--c:#58a5ff;--bgc:#174b80}
 .purple{--c:#bb91ff;--bgc:#4b3478}
 .teal,.green{--c:#55d5c1;--bgc:#15594f}
@@ -145,411 +66,280 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .grey,.gray{--c:#a0a0a0;--bgc:#505866}
 .pink{--c:#ff00ff;--bgc:#702870}
 .cyan{--c:#00bfff;--bgc:#174b80}
-.white{--c:#ffffff;--bgc:#e8e8e8;color:#111827}
+.white{--c:#fff;--bgc:#e8e8e8;color:#111827}
 .event.white small{color:#374151}
-.legend{
-  display:flex;flex-wrap:wrap;gap:17px;padding:13px 16px;
-  border-top:1px solid var(--line);background:#101b2a;
-  color:#a1b4cc;font-size:11px;
-}
+.legend{display:flex;flex-wrap:wrap;gap:17px;padding:13px 16px;border-top:1px solid var(--line);background:#101b2a;color:#a1b4cc;font-size:11px}
 .legend span{display:flex;align-items:center;gap:7px}
 .swatch{height:8px;width:8px;border-radius:3px}
-.foot{
-  display:flex;justify-content:space-between;gap:12px;
-  color:#657d9b;font-size:10px;margin-top:14px;
-}
-.backdrop{
-  position:fixed;inset:0;background:#02060dcc;display:none;
-  align-items:center;justify-content:center;padding:18px;z-index:20;
-}
+.foot{display:flex;justify-content:space-between;gap:12px;color:#657d9b;font-size:10px;margin-top:14px}
+.backdrop{position:fixed;inset:0;background:#02060dcc;display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
 .backdrop.open{display:flex}
-.modal{
-  width:min(470px,100%);background:#111e30;
-  border:1px solid #385574;border-radius:17px;
-  padding:22px;box-shadow:0 25px 80px #000b;
-}
-.modalhead{
-  display:flex;justify-content:space-between;
-  align-items:center;margin-bottom:15px;
-}
+.modal{width:min(470px,100%);background:#111e30;border:1px solid #385574;border-radius:17px;padding:22px;box-shadow:0 25px 80px #000b}
 .modal h2{font-size:19px;margin:0}
 .close{background:none;border:0;color:#a8bad1;font-size:25px}
 .field{display:grid;gap:6px;margin:12px 0}
 .field label{font-size:11px;color:#afc1d8;font-weight:700}
-.field input,.field select,.field textarea{
-  width:100%;background:#0a1524;border:1px solid #2b425f;
-  color:#eef5ff;border-radius:9px;padding:10px;
-}
+.field input,.field select,.field textarea{width:100%;background:#0a1524;border:1px solid #2b425f;color:#eef5ff;border-radius:9px;padding:10px}
 .twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.modalactions{
-  display:flex;justify-content:space-between;gap:10px;margin-top:18px;
-}
+.modalactions{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
 .actionright{display:flex;gap:8px}
 .auth-tabs{display:flex;gap:8px;margin:16px 0}
 .auth-tabs button{flex:1}
 .auth-tabs .selected{background:#2466b2;border-color:#438ff5}
-.admin-panel{
-  max-width:1050px;margin:0 auto 28px;background:#101b2b;
-  border:1px solid #385574;border-radius:15px;padding:20px;
-}
-.admin-row{
-  display:grid;
-  grid-template-columns:minmax(0,2fr) minmax(135px,1fr) auto;
-  gap:10px;align-items:center;padding:14px 0;
-  border-bottom:1px solid #253a55;
-}
-.admin-row select{
-  background:#0a1524;color:#eef5ff;
-  border:1px solid #385574;border-radius:8px;
-  padding:9px;width:100%;
-}
-.admin-actions{display:flex;gap:7px;flex-wrap:wrap}
-.admin-status{font-size:12px;margin-top:4px;color:#91a6c2}
-.admin-status.banned{color:#ff6576;font-weight:800}
-.alias-field{
-  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
-  margin-top:10px;
-}
-.alias-field input{
-  min-width:160px;max-width:260px;flex:1;
-  background:#0a1524;border:1px solid #385574;
-  color:#eef5ff;border-radius:8px;padding:9px;
-}
-#banPanel{
-  display:none;min-height:100vh;
-  align-items:center;justify-content:center;padding:20px;
-  background:radial-gradient(ellipse at top,#431524 0%,#080e18 55%);
-}
-.ban-card{
-  width:min(560px,100%);background:#101827;
-  border:1px solid #a93649;border-radius:20px;
-  padding:35px 25px;text-align:center;
-  box-shadow:0 20px 80px #0008;
-}
+
+/* NEUE BENUTZERVERWALTUNG */
+.admin-panel{max-width:1050px;margin:0 auto 28px;background:#101b2b;border:1px solid #385574;border-radius:15px;padding:20px}
+#adminUsers{display:grid;gap:14px;margin-top:20px}
+.admin-row{display:flex;flex-direction:column;gap:17px;padding:19px;background:#14253b;border:1px solid #2c4564;border-radius:14px;min-width:0}
+.admin-user-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.admin-identity{display:flex;align-items:center;gap:12px;min-width:0}
+.admin-avatar{flex:0 0 43px;width:43px;height:43px;border-radius:50%;display:grid;place-items:center;background:#1d477b;color:#c4e1ff;font-size:21px}
+.admin-name{font-size:15px;font-weight:800;color:#f3f8ff;overflow-wrap:anywhere}
+.admin-email{font-size:11px;color:#9db1ca;overflow-wrap:anywhere}
+.admin-status{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #276e58;background:#123a35;color:#7de7ba;border-radius:999px;font-size:11px;font-weight:750}
+.admin-status.pending{border-color:#796034;background:#40321b;color:#ffcb75}
+.admin-status.banned{border-color:#9b364a;background:#431d2a;color:#ff8896}
+.admin-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.admin-field{display:grid;gap:7px;min-width:0}
+.admin-field label{font-size:11px;color:#9db1ca;font-weight:750}
+.admin-field input,.admin-field select{width:100%;min-width:0;background:#0c192b;border:1px solid #2d4665;border-radius:9px;padding:11px;color:#f3f8ff}
+.admin-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;border-top:1px solid #2c4564;padding-top:15px}
+.admin-actions .btn{min-height:39px}
+.admin-owner-note{font-size:12px;color:#9db1ca}
+
+/* BANNSEITE */
+#banPanel{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at top,#431524 0%,#080e18 55%)}
+.ban-card{width:min(560px,100%);background:#101827;border:1px solid #a93649;border-radius:20px;padding:35px 25px;text-align:center;box-shadow:0 20px 80px #0008}
 .ban-symbol{font-size:62px;color:#ff455c;margin-bottom:10px}
 .ban-title{font-size:27px;color:#ff455c;margin:8px 0 14px}
 .ban-description{color:#eef5ff;font-size:15px}
-.ban-timer{
-  background:#351823;border:1px solid #a93649;
-  border-radius:13px;padding:20px;margin:25px 0;
-}
+.ban-timer{background:#351823;border:1px solid #a93649;border-radius:13px;padding:20px;margin:25px 0}
 .ban-timer-label{color:#ff8896;font-weight:800;margin-bottom:12px}
-.ban-time{
-  color:white;font-size:clamp(22px,5vw,33px);
-  font-weight:900;letter-spacing:2px;font-variant-numeric:tabular-nums;
-}
+.ban-time{color:white;font-size:clamp(22px,5vw,33px);font-weight:900;letter-spacing:2px;font-variant-numeric:tabular-nums}
 .ban-time-labels{color:#c5a4ac;font-size:11px;margin-top:8px}
-.ban-contact{
-  color:white;border-top:1px solid #34445c;
-  padding-top:20px;margin-top:20px;font-size:13px;
-}
+.ban-contact{color:white;border-top:1px solid #34445c;padding-top:20px;margin-top:20px;font-size:13px}
 .ban-contact strong{color:#ff8896}
 .ban-form-title{color:#ff6576;margin-top:0}
 .ban-choice{display:grid;gap:10px;margin:14px 0}
 .ban-choice label{color:#d5e3f6;font-size:12px;font-weight:700}
-.ban-choice select,.ban-choice input{
-  width:100%;background:#0a1524;color:white;
-  border:1px solid #70404c;border-radius:9px;padding:11px;
-}
+.ban-choice select,.ban-choice input{width:100%;background:#0a1524;color:white;border:1px solid #70404c;border-radius:9px;padding:11px}
 .ban-note{color:#ff9eac;font-size:12px;min-height:18px}
 @media(max-width:700px){
-  .shell{padding:16px 11px 25px}
-  .top{align-items:flex-start;flex-direction:column}
-  .live{display:none}
-  .intro{flex-direction:column}
-  .toolbar{align-items:flex-start;flex-direction:column}
-  .righttools{width:100%;justify-content:space-between}
+.shell{padding:16px 11px 25px}
+.top{align-items:flex-start;flex-direction:column}
+.live{display:none}
+.intro,.toolbar{align-items:flex-start;flex-direction:column}
+.righttools{width:100%;justify-content:space-between}
 }
-@media(max-width:650px){
-  .admin-row{grid-template-columns:1fr}
-  .topright{gap:8px}
+@media(max-width:600px){
+.admin-fields{grid-template-columns:1fr}
+.admin-row{padding:14px}
+.admin-actions .btn{flex:1 1 145px}
 }
 </style>
 </head>
 <body>
 
-<!-- ANMELDUNG -->
+<!-- LOGIN -->
 <div id="authPanel" style="min-height:100vh;display:grid;place-items:center;padding:22px">
-  <form id="loginForm" class="modal" style="width:min(420px,100%)">
-    <div class="brand" style="margin-bottom:22px">
-      <div class="logo">M</div>
-      <div><b>MIRAGE</b><small>KALENDER</small></div>
-    </div>
-    <div class="auth-tabs">
-      <button type="button" class="btn selected" id="loginTab">Anmelden</button>
-      <button type="button" class="btn" id="registerTab">Registrieren</button>
-    </div>
-    <h2 id="authTitle" style="margin:0 0 6px">Zugang</h2>
-    <p id="authDescription" style="color:var(--muted);font-size:12px">
-      Melde dich mit deinem persönlichen Mirage-Zugang an.
-    </p>
-    <div class="field">
-      <label for="loginEmail">E-Mail-Adresse</label>
-      <input id="loginEmail" type="email" autocomplete="username"
-             required placeholder="name@beispiel.de">
-    </div>
-    <div class="field">
-      <label for="loginPassword">Passwort</label>
-      <input id="loginPassword" type="password"
-             autocomplete="current-password" required placeholder="Dein Passwort">
-    </div>
-    <div class="field" id="confirmRegisterField" style="display:none">
-      <label for="registerConfirm">Passwort bestätigen</label>
-      <input id="registerConfirm" type="password" autocomplete="new-password"
-             minlength="8" placeholder="Passwort wiederholen">
-    </div>
-    <button class="btn primary" id="authSubmit" type="submit" style="width:100%">
-      Anmelden
-    </button>
-    <button type="button" id="forgotPasswordBtn" class="btn"
-            style="width:100%;margin-top:10px">
-      Passwort vergessen?
-    </button>
-    <p id="authMessage" style="color:#ff9eac;font-size:12px;min-height:18px"></p>
-    <p style="color:var(--muted);font-size:11px">
-      Neue Benutzer werden erst nach Freigabe durch die Projektleitung zugelassen.
-    </p>
-  </form>
+<form id="loginForm" class="modal" style="width:min(420px,100%)">
+<div class="brand" style="margin-bottom:22px">
+<div class="logo">M</div>
+<div><b>MIRAGE</b><small>KALENDER</small></div>
+</div>
+<div class="auth-tabs">
+<button type="button" class="btn selected" id="loginTab">Anmelden</button>
+<button type="button" class="btn" id="registerTab">Registrieren</button>
+</div>
+<h2 id="authTitle">Zugang</h2>
+<p id="authDescription" style="color:var(--muted);font-size:12px">Melde dich mit deinem persönlichen Mirage-Zugang an.</p>
+<div class="field">
+<label for="loginEmail">E-Mail-Adresse</label>
+<input id="loginEmail" type="email" autocomplete="username" required>
+</div>
+<div class="field">
+<label for="loginPassword">Passwort</label>
+<input id="loginPassword" type="password" autocomplete="current-password" required>
+</div>
+<div class="field" id="confirmRegisterField" style="display:none">
+<label for="registerConfirm">Passwort bestätigen</label>
+<input id="registerConfirm" type="password" autocomplete="new-password" minlength="8">
+</div>
+<button class="btn primary" id="authSubmit" type="submit" style="width:100%">Anmelden</button>
+<button type="button" id="forgotPasswordBtn" class="btn" style="width:100%;margin-top:10px">Passwort vergessen?</button>
+<p id="authMessage" style="color:#ff9eac;font-size:12px;min-height:18px"></p>
+<p style="color:var(--muted);font-size:11px">Neue Benutzer werden erst nach Freigabe durch die Projektleitung zugelassen.</p>
+</form>
 </div>
 
-<!-- WARTEN AUF FREIGABE -->
+<!-- FREIGABE -->
 <div id="pendingPanel" style="display:none;min-height:100vh;place-items:center;padding:22px">
-  <div class="modal" style="width:min(460px,100%);text-align:center">
-    <div class="logo" style="margin:0 auto 18px">M</div>
-    <h2>Warten auf Freigabe</h2>
-    <p style="color:var(--muted)">
-      Dein Zugang ist registriert, aber noch nicht durch die Projektleitung freigegeben.
-    </p>
-    <button type="button" class="btn primary" id="pendingRefresh">
-      Freigabe erneut prüfen
-    </button>
-    <button type="button" class="btn" id="pendingLogout" style="margin-top:10px">
-      Abmelden
-    </button>
-    <p id="pendingMessage" style="color:#91a6c2;font-size:12px"></p>
-  </div>
+<div class="modal" style="text-align:center">
+<div class="logo" style="margin:0 auto 18px">M</div>
+<h2>Warten auf Freigabe</h2>
+<p style="color:var(--muted)">Dein Zugang muss noch von der Projektleitung freigegeben werden.</p>
+<button class="btn primary" id="pendingRefresh">Freigabe erneut prüfen</button>
+<button class="btn" id="pendingLogout">Abmelden</button>
+<p id="pendingMessage" style="color:var(--muted)"></p>
+</div>
 </div>
 
-<!-- BANNSEITE -->
+<!-- BANN -->
 <div id="banPanel">
-  <div class="ban-card">
-    <div class="logo" style="margin:0 auto 18px">M</div>
-    <div class="ban-symbol">⛔</div>
-    <h1 class="ban-title">Dein Konto wurde gesperrt!</h1>
-    <p class="ban-description">
-      Du hast derzeit keinen Zugriff auf den Mirage Kalender.
-    </p>
-    <div class="ban-timer">
-      <div class="ban-timer-label" id="banTimerTitle">
-        Verbleibende Sperrdauer
-      </div>
-      <div class="ban-time" id="banCountdown">00 : 00 : 00 : 00</div>
-      <div class="ban-time-labels" id="banTimerLabels">
-        Tage : Stunden : Minuten : Sekunden
-      </div>
-      <p id="banExpires" style="color:#c5a4ac;font-size:12px"></p>
-    </div>
-    <div class="ban-contact">
-      Wende dich bei Fragen zu deiner Sperrung an die
-      <strong>Projektleitung (Leon Waechter).</strong>
-    </div>
-    <button class="btn" id="banLogout" style="margin-top:25px">
-      Abmelden
-    </button>
-    <p id="banStatusMessage" style="color:#c5a4ac;font-size:12px"></p>
-  </div>
+<div class="ban-card">
+<div class="logo" style="margin:0 auto 18px">M</div>
+<div class="ban-symbol">⛔</div>
+<h1 class="ban-title">Dein Konto wurde gesperrt!</h1>
+<p class="ban-description">Du hast derzeit keinen Zugriff auf den Mirage Kalender.</p>
+<div class="ban-timer">
+<div class="ban-timer-label" id="banTimerTitle">Verbleibende Sperrdauer</div>
+<div class="ban-time" id="banCountdown">00 : 00 : 00 : 00</div>
+<div class="ban-time-labels" id="banTimerLabels">Tage : Stunden : Minuten : Sekunden</div>
+<p id="banExpires" style="color:#c5a4ac;font-size:12px"></p>
+</div>
+<div class="ban-contact">Wende dich bei Fragen zu deiner Sperrung an die <strong>Projektleitung (Leon Waechter).</strong></div>
+<button class="btn" id="banLogout" style="margin-top:25px">Abmelden</button>
+<p id="banStatusMessage" style="color:#c5a4ac;font-size:12px"></p>
+</div>
 </div>
 
-<!-- PASSWORT ZURÜCKSETZEN -->
+<!-- PASSWORT RESET -->
 <div id="resetPanel" style="display:none;min-height:100vh;place-items:center;padding:22px">
-  <form id="resetPasswordForm" class="modal" style="width:min(420px,100%)">
-    <div class="brand" style="margin-bottom:20px">
-      <div class="logo">M</div>
-      <div><b>MIRAGE</b><small>KALENDER</small></div>
-    </div>
-    <h2>Neues Passwort festlegen</h2>
-    <p style="color:var(--muted)">
-      Bitte lege dein neues Passwort für deinen Mirage-Zugang fest.
-    </p>
-    <div class="field">
-      <label for="newPassword">Neues Passwort</label>
-      <input id="newPassword" type="password"
-             autocomplete="new-password" minlength="8" required>
-    </div>
-    <div class="field">
-      <label for="confirmPassword">Passwort bestätigen</label>
-      <input id="confirmPassword" type="password"
-             autocomplete="new-password" minlength="8" required>
-    </div>
-    <button class="btn primary" type="submit" style="width:100%">
-      Neues Passwort speichern
-    </button>
-    <p id="resetMessage" style="font-size:12px;min-height:18px"></p>
-  </form>
+<form id="resetPasswordForm" class="modal">
+<div class="brand"><div class="logo">M</div><div><b>MIRAGE</b><small>KALENDER</small></div></div>
+<h2>Neues Passwort festlegen</h2>
+<div class="field"><label>Neues Passwort</label><input id="newPassword" type="password" minlength="8" required></div>
+<div class="field"><label>Passwort bestätigen</label><input id="confirmPassword" type="password" minlength="8" required></div>
+<button class="btn primary" type="submit">Passwort speichern</button>
+<p id="resetMessage"></p>
+</form>
 </div>
 
 <!-- KALENDER -->
 <div class="shell" id="calendarApp" style="display:none">
-  <header class="top">
-    <div class="brand">
-      <div class="logo">M</div>
-      <div><b>MIRAGE</b><small>KALENDER</small></div>
-    </div>
-    <div class="topright">
-      <span class="live" id="userStatus">Zentral verbunden</span>
-      <button class="btn primary" id="adminBtn" style="display:none">🛡 Admin</button>
-      <button class="btn" id="logoutBtn">Abmelden</button>
-      <button class="btn primary" id="newTop">＋ Termin erstellen</button>
-    </div>
-  </header>
+<header class="top">
+<div class="brand"><div class="logo">M</div><div><b>MIRAGE</b><small>KALENDER</small></div></div>
+<div class="topright">
+<span class="live" id="userStatus">Zentral verbunden</span>
+<button class="btn primary" id="adminBtn" style="display:none">🛡 Admin</button>
+<button class="btn" id="logoutBtn">Abmelden</button>
+<button class="btn primary" id="newTop">＋ Termin erstellen</button>
+</div>
+</header>
 
-  <!-- BENUTZERVERWALTUNG -->
-  <section class="admin-panel" id="adminPanel" style="display:none">
-    <div class="modalhead">
-      <h2>🛡 Benutzerverwaltung</h2>
-      <button class="close" id="adminClose" type="button">×</button>
-    </div>
-    <p style="color:var(--muted)">
-      Registrierungen freigeben, Rollen vergeben, Aliase verwalten und Benutzer sperren.
-    </p>
-    <div id="adminUsers">Benutzer werden geladen …</div>
-    <p id="adminMessage" style="color:#91a6c2"></p>
-  </section>
+<section class="admin-panel" id="adminPanel" style="display:none">
+<div class="modalhead">
+<h2>🛡 Benutzerverwaltung</h2>
+<button class="close" id="adminClose" type="button">×</button>
+</div>
+<p style="color:var(--muted)">Konten freigeben, Rollen vergeben, Aliase verwalten und Benutzer sperren.</p>
+<div id="adminUsers">Benutzer werden geladen …</div>
+<p id="adminMessage" style="color:#91a6c2"></p>
+</section>
 
-  <section class="intro">
-    <div>
-      <div class="eyebrow">Interner Bereich</div>
-      <h1>Wochenkalender</h1>
-      <p>Alle wichtigen Termine der Mirage-Abteilungen auf einen Blick.</p>
-    </div>
-  </section>
+<section class="intro">
+<div><div class="eyebrow">Interner Bereich</div><h1>Wochenkalender</h1>
+<p>Alle wichtigen Termine der Mirage-Abteilungen auf einen Blick.</p></div>
+</section>
 
-  <div class="toolbar">
-    <div class="nav">
-      <button class="iconbtn" id="prev">‹</button>
-      <strong id="weekLabel"></strong>
-      <button class="iconbtn" id="next">›</button>
-      <button class="btn" id="todayBtn">Heute</button>
-    </div>
-    <div class="righttools">
-      <span class="tz">Europe/Berlin · 24-Stunden-Format</span>
-      <button class="btn primary" id="newToolbar">＋ Neuer Termin</button>
-    </div>
-  </div>
+<div class="toolbar">
+<div class="nav">
+<button class="iconbtn" id="prev">‹</button>
+<strong id="weekLabel"></strong>
+<button class="iconbtn" id="next">›</button>
+<button class="btn" id="todayBtn">Heute</button>
+</div>
+<div class="righttools">
+<span class="tz">Europe/Berlin · 24-Stunden-Format</span>
+<button class="btn primary" id="newToolbar">＋ Neuer Termin</button>
+</div>
+</div>
 
-  <div class="frame">
-    <div class="calendar">
-      <div class="headgrid" id="head"></div>
-      <div class="bodygrid" id="body"></div>
-    </div>
-    <div class="legend">
-      <span><i class="swatch" style="background:#00bfff"></i> Team-Verwaltung</span>
-      <span><i class="swatch" style="background:#778899"></i> Orga-Verwaltung-Crime</span>
-      <span><i class="swatch" style="background:#ffffff"></i> Orga-Verwaltung-State</span>
-      <span><i class="swatch" style="background:#55d5c1"></i> Unoff-Verwaltung</span>
-      <span><i class="swatch" style="background:#ffb76e"></i> Event-Verwaltung</span>
-      <span><i class="swatch" style="background:#ff00ff"></i> Bio-Verwaltung</span>
-      <span><i class="swatch" style="background:#ff8195"></i> Teambesprechung</span>
-    </div>
-  </div>
-
-  <footer class="foot">
-    <span>MIRAGE KALENDER SYSTEM</span>
-    <span>Zentrale Mirage-Datenbank · Synchronisierung für alle berechtigten Nutzer</span>
-  </footer>
+<div class="frame">
+<div class="calendar">
+<div class="headgrid" id="head"></div>
+<div class="bodygrid" id="body"></div>
+</div>
+<div class="legend">
+<span><i class="swatch" style="background:#00bfff"></i> Team-Verwaltung</span>
+<span><i class="swatch" style="background:#778899"></i> Orga-Verwaltung-Crime</span>
+<span><i class="swatch" style="background:#fff"></i> Orga-Verwaltung-State</span>
+<span><i class="swatch" style="background:#55d5c1"></i> Unoff-Verwaltung</span>
+<span><i class="swatch" style="background:#ffb76e"></i> Event-Verwaltung</span>
+<span><i class="swatch" style="background:#ff00ff"></i> Bio-Verwaltung</span>
+<span><i class="swatch" style="background:#ff8195"></i> Teambesprechung</span>
+</div>
+</div>
+<footer class="foot">
+<span>MIRAGE KALENDER SYSTEM</span>
+<span>Zentrale Mirage-Datenbank · Synchronisierung für berechtigte Nutzer</span>
+</footer>
 </div>
 
 <!-- TERMINFENSTER -->
 <div class="backdrop" id="backdrop">
-  <form class="modal" id="form">
-    <div class="modalhead">
-      <h2 id="modalTitle">Neuen Termin erstellen</h2>
-      <button type="button" class="close" id="close">×</button>
-    </div>
-    <input type="hidden" id="eventId">
-    <div class="field">
-      <label for="title">Termin / Bezeichnung</label>
-      <input id="title" maxlength="70" required placeholder="z. B. Teambesprechung">
-    </div>
-    <div class="field">
-      <label for="category">Kategorie</label>
-      <select id="category">
-        <option value="blue">Team-Verwaltung</option>
-        <option value="white">Orga-Verwaltung-State</option>
-        <option value="gray">Orga-Verwaltung-Crime</option>
-        <option value="green">Unoff-Verwaltung</option>
-        <option value="orange">Event-Verwaltung</option>
-        <option value="purple">Bio-Verwaltung</option>
-        <option value="red">Teambesprechung</option>
-      </select>
-    </div>
-    <div class="field">
-      <label for="date">Datum</label>
-      <input id="date" type="date" required>
-    </div>
-    <div class="twocol">
-      <div class="field">
-        <label for="start">Beginn</label>
-        <input id="start" type="time" value="19:00" required>
-      </div>
-      <div class="field">
-        <label for="end">Ende</label>
-        <input id="end" type="time" value="20:00" required>
-      </div>
-    </div>
-    <div class="field">
-      <label for="description">Zusätzliche Informationen</label>
-      <textarea id="description" rows="3" maxlength="300"></textarea>
-    </div>
-    <div class="modalactions">
-      <button type="button" class="btn danger" id="delete" style="display:none">
-        Löschen
-      </button>
-      <div class="actionright">
-        <button type="button" class="btn" id="cancel">Abbrechen</button>
-        <button type="submit" class="btn primary">Speichern</button>
-      </div>
-    </div>
-  </form>
+<form class="modal" id="form">
+<div class="modalhead">
+<h2 id="modalTitle">Neuen Termin erstellen</h2>
+<button type="button" class="close" id="close">×</button>
+</div>
+<input type="hidden" id="eventId">
+<div class="field"><label for="title">Termin / Bezeichnung</label><input id="title" maxlength="70" required></div>
+<div class="field">
+<label for="category">Kategorie</label>
+<select id="category">
+<option value="blue">Team-Verwaltung</option>
+<option value="white">Orga-Verwaltung-State</option>
+<option value="gray">Orga-Verwaltung-Crime</option>
+<option value="green">Unoff-Verwaltung</option>
+<option value="orange">Event-Verwaltung</option>
+<option value="purple">Bio-Verwaltung</option>
+<option value="red">Teambesprechung</option>
+</select>
+</div>
+<div class="field"><label for="date">Datum</label><input id="date" type="date" required></div>
+<div class="twocol">
+<div class="field"><label for="start">Beginn</label><input id="start" type="time" value="19:00" required></div>
+<div class="field"><label for="end">Ende</label><input id="end" type="time" value="20:00" required></div>
+</div>
+<div class="field"><label for="description">Zusätzliche Informationen</label><textarea id="description" rows="3" maxlength="300"></textarea></div>
+<div class="modalactions">
+<button type="button" class="btn danger" id="delete" style="display:none">Löschen</button>
+<div class="actionright">
+<button type="button" class="btn" id="cancel">Abbrechen</button>
+<button type="submit" class="btn primary">Speichern</button>
+</div>
+</div>
+</form>
 </div>
 
 <!-- BANNFENSTER -->
 <div class="backdrop" id="banBackdrop">
-  <div class="modal">
-    <div class="modalhead">
-      <h2 class="ban-form-title">⛔ Benutzer sperren / bannen</h2>
-      <button type="button" class="close" id="banModalClose">×</button>
-    </div>
-    <p style="color:#91a6c2;font-size:12px">
-      Ausgewählter Benutzer:
-    </p>
-    <strong id="banTargetEmail"></strong>
-    <div class="ban-choice">
-      <label for="banType">Art der Sperre</label>
-      <select id="banType">
-        <option value="temporary">Temporäre Sperre</option>
-        <option value="permanent">Permanente Sperre</option>
-      </select>
-    </div>
-    <div class="ban-choice" id="banDaysField">
-      <label for="banDays">Individuelle Sperrdauer in Tagen</label>
-      <input id="banDays" type="number" min="1" max="36500"
-             step="1" value="7" required>
-    </div>
-    <p style="color:#91a6c2;font-size:12px">
-      Bei einer temporären Sperre wird der Zugang nach Ablauf
-      der festgelegten Dauer automatisch wieder möglich.
-    </p>
-    <p id="banModalMessage" class="ban-note"></p>
-    <div class="modalactions">
-      <button type="button" class="btn" id="banModalCancel">
-        Abbrechen
-      </button>
-      <button type="button" class="btn ban" id="banConfirm">
-        ⛔ Bann bestätigen
-      </button>
-    </div>
-  </div>
+<div class="modal">
+<div class="modalhead">
+<h2 class="ban-form-title">⛔ Benutzer sperren / bannen</h2>
+<button type="button" class="close" id="banModalClose">×</button>
+</div>
+<p style="color:var(--muted)">Ausgewählter Benutzer:</p>
+<strong id="banTargetEmail"></strong>
+<div class="ban-choice">
+<label for="banType">Art der Sperre</label>
+<select id="banType">
+<option value="temporary">Temporäre Sperre</option>
+<option value="permanent">Permanente Sperre</option>
+</select>
+</div>
+<div class="ban-choice" id="banDaysField">
+<label for="banDays">Sperrdauer in Tagen</label>
+<input id="banDays" type="number" min="1" max="36500" step="1" value="7">
+</div>
+<p style="color:var(--muted);font-size:12px">Temporäre Sperren laufen automatisch ab.</p>
+<p id="banModalMessage" class="ban-note"></p>
+<div class="modalactions">
+<button class="btn" type="button" id="banModalCancel">Abbrechen</button>
+<button class="btn ban" type="button" id="banConfirm">⛔ Bann bestätigen</button>
+</div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -557,845 +347,348 @@ button:disabled{opacity:.5;cursor:not-allowed}
 const SUPABASE_URL='https://vtjqnpiwqxycgkwadhdz.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_brju_vYbsJyfudsLig1JTA_tQnI8xcB';
 const OWNER_EMAIL='l.junker1802@icloud.com';
-const START_HOUR=7;
-const END_HOUR=24;
-
+const START_HOUR=7,END_HOUR=24;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
-const dateKey=d=>
-  `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fmt=(d,opt)=>new Intl.DateTimeFormat('de-DE',opt).format(d);
+const minutes=t=>{const [h,m]=String(t).slice(0,5).split(':').map(Number);return h*60+m};
+const monday=d=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-(x.getDay()+6)%7);return x};
+const weekStart=()=>{const d=monday(new Date());d.setDate(d.getDate()+offset*7);return d};
+const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-let offset=0;
-let events=[];
-let supabaseClient=null;
-let realtimeChannel=null;
-let currentUser=null;
-let currentRole=null;
-let currentAlias=null;
-let currentApproved=false;
-let isOwner=false;
-let passwordRecoveryActive=false;
-let authMode='login';
-let enteringCalendar=false;
-let checkingPermissions=false;
-let currentBan=null;
-let banTarget=null;
-let sessionVersion=0;
+let offset=0,events=[],supabaseClient=null,realtimeChannel=null;
+let currentUser=null,currentRole=null,currentAlias=null;
+let currentApproved=false,isOwner=false,passwordRecoveryActive=false;
+let authMode='login',enteringCalendar=false,checkingPermissions=false;
+let currentBan=null,banTarget=null,sessionVersion=0;
 
-function minutes(t){
-  const [h,m]=String(t).slice(0,5).split(':').map(Number);
-  return h*60+m;
+function isActiveBan(d){
+return !!(d?.banned_permanently||(d?.banned_until&&new Date(d.banned_until).getTime()>Date.now()));
 }
-
-function monday(d){
-  const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
-  x.setDate(x.getDate()-(x.getDay()+6)%7);
-  return x;
-}
-
-function fmt(d,options){
-  return new Intl.DateTimeFormat('de-DE',options).format(d);
-}
-
-function weekStart(){
-  const d=monday(new Date());
-  d.setDate(d.getDate()+offset*7);
-  return d;
-}
-
-function escapeHTML(s){
-  return String(s??'').replace(/[&<>"']/g,c=>({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }[c]));
-}
-
-function isActiveBan(data){
-  return Boolean(
-    data?.banned_permanently ||
-    (data?.banned_until &&
-      new Date(data.banned_until).getTime()>Date.now())
-  );
-}
-
 function canEdit(){
-  return currentApproved &&
-    !isActiveBan(currentBan) &&
-    ['projektleitung','administrator'].includes(currentRole);
+return currentApproved&&!isActiveBan(currentBan)&&['projektleitung','administrator'].includes(currentRole);
 }
-
 function hideAllPanels(){
-  $('authPanel').style.display='none';
-  $('pendingPanel').style.display='none';
-  $('banPanel').style.display='none';
-  $('resetPanel').style.display='none';
-  $('calendarApp').style.display='none';
-  $('adminPanel').style.display='none';
-  $('backdrop').classList.remove('open');
-  $('banBackdrop').classList.remove('open');
+for(const id of ['authPanel','pendingPanel','banPanel','resetPanel','calendarApp','adminPanel'])$(id).style.display='none';
+$('backdrop').classList.remove('open');
+$('banBackdrop').classList.remove('open');
 }
-
 function showAuth(message=''){
-  hideAllPanels();
-  $('authPanel').style.display='grid';
-  $('authMessage').textContent=message;
+hideAllPanels();$('authPanel').style.display='grid';$('authMessage').textContent=message;
 }
-
 function showPending(message=''){
-  hideAllPanels();
-  $('pendingPanel').style.display='grid';
-  $('pendingMessage').textContent=message;
+hideAllPanels();$('pendingPanel').style.display='grid';$('pendingMessage').textContent=message;
 }
-
 function showApp(){
-  $('authPanel').style.display='none';
-  $('pendingPanel').style.display='none';
-  $('banPanel').style.display='none';
-  $('resetPanel').style.display='none';
-  $('calendarApp').style.display='block';
-
-  $('userStatus').textContent=
-    '👤 '+(currentAlias||'Alias noch nicht vergeben');
-
-  $('adminBtn').style.display=isOwner?'inline-block':'none';
-
-  const editDisplay=canEdit()?'inline-block':'none';
-  $('newTop').style.display=editDisplay;
-  $('newToolbar').style.display=editDisplay;
+for(const id of ['authPanel','pendingPanel','banPanel','resetPanel'])$(id).style.display='none';
+$('calendarApp').style.display='block';
+$('userStatus').textContent='👤 '+(currentAlias||'Alias noch nicht vergeben');
+$('adminBtn').style.display=isOwner?'inline-block':'none';
+$('newTop').style.display=canEdit()?'inline-block':'none';
+$('newToolbar').style.display=canEdit()?'inline-block':'none';
 }
-
-function showResetPanel(){
-  passwordRecoveryActive=true;
-  hideAllPanels();
-  $('resetPanel').style.display='grid';
-}
-
 function stopRealtime(){
-  if(realtimeChannel && supabaseClient){
-    supabaseClient.removeChannel(realtimeChannel);
-    realtimeChannel=null;
-  }
+if(realtimeChannel&&supabaseClient){supabaseClient.removeChannel(realtimeChannel);realtimeChannel=null}
 }
-
-function showBan(data){
-  currentBan=data;
-  currentApproved=false;
-  isOwner=false;
-  events=[];
-  stopRealtime();
-  hideAllPanels();
-  $('banPanel').style.display='flex';
-  updateBanCountdown();
+function showBan(d){
+currentBan=d;currentApproved=false;isOwner=false;events=[];
+stopRealtime();hideAllPanels();$('banPanel').style.display='flex';updateBanCountdown();
 }
-
-function formatRemaining(ms){
-  const total=Math.max(0,Math.ceil(ms/1000));
-  const days=Math.floor(total/86400);
-  const hours=Math.floor((total%86400)/3600);
-  const mins=Math.floor((total%3600)/60);
-  const secs=total%60;
-
-  return [
-    String(days).padStart(2,'0'),
-    pad(hours),
-    pad(mins),
-    pad(secs)
-  ].join(' : ');
-}
-
 function updateBanCountdown(){
-  if($('banPanel').style.display!=='flex')return;
-  if(!currentBan)return;
-
-  if(currentBan.banned_permanently){
-    $('banTimerTitle').textContent='Art der Sperre';
-    $('banCountdown').textContent='PERMANENT GESPERRT';
-    $('banTimerLabels').textContent=
-      'Diese Sperre hat kein automatisches Ablaufdatum.';
-    $('banExpires').textContent='';
-    return;
-  }
-
-  const end=new Date(currentBan.banned_until).getTime();
-
-  if(!Number.isFinite(end)){
-    $('banCountdown').textContent='Status wird geprüft';
-    return;
-  }
-
-  const remaining=end-Date.now();
-
-  if(remaining<=0){
-    $('banCountdown').textContent='00 : 00 : 00 : 00';
-    $('banStatusMessage').textContent=
-      'Sperrdauer abgelaufen. Zugang wird geprüft …';
-    checkPermissions();
-    return;
-  }
-
-  $('banTimerTitle').textContent='Verbleibende Sperrdauer';
-  $('banCountdown').textContent=formatRemaining(remaining);
-  $('banTimerLabels').textContent=
-    'Tage : Stunden : Minuten : Sekunden';
-
-  $('banExpires').textContent=
-    'Sperre endet am '+
-    fmt(new Date(end),{
-      day:'2-digit',month:'2-digit',year:'numeric',
-      hour:'2-digit',minute:'2-digit',
-      timeZone:'Europe/Berlin'
-    })+' Uhr';
+if($('banPanel').style.display!=='flex'||!currentBan)return;
+if(currentBan.banned_permanently){
+$('banTimerTitle').textContent='Art der Sperre';
+$('banCountdown').textContent='PERMANENT GESPERRT';
+$('banTimerLabels').textContent='Diese Sperre hat kein automatisches Ablaufdatum.';
+$('banExpires').textContent='';return;
 }
-
+const end=new Date(currentBan.banned_until).getTime();
+if(!Number.isFinite(end))return;
+const total=Math.max(0,Math.ceil((end-Date.now())/1000));
+if(total===0){
+$('banCountdown').textContent='00 : 00 : 00 : 00';
+$('banStatusMessage').textContent='Sperrdauer abgelaufen. Zugang wird geprüft …';
+checkPermissions();return;
+}
+const days=Math.floor(total/86400),hours=Math.floor(total%86400/3600);
+const mins=Math.floor(total%3600/60),secs=total%60;
+$('banCountdown').textContent=[String(days).padStart(2,'0'),pad(hours),pad(mins),pad(secs)].join(' : ');
+$('banTimerTitle').textContent='Verbleibende Sperrdauer';
+$('banTimerLabels').textContent='Tage : Stunden : Minuten : Sekunden';
+$('banExpires').textContent='Sperre endet am '+fmt(new Date(end),{
+day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'
+})+' Uhr';
+}
 setInterval(updateBanCountdown,1000);
 
 function setAuthMode(mode){
-  authMode=mode;
-  $('loginTab').classList.toggle('selected',mode==='login');
-  $('registerTab').classList.toggle('selected',mode==='register');
-  $('authTitle').textContent=mode==='login'?'Zugang':'Registrierung';
-
-  $('authDescription').textContent=mode==='login'
-    ?'Melde dich mit deinem persönlichen Mirage-Zugang an.'
-    :'Erstelle deinen Zugang. Die Projektleitung muss dich anschließend freigeben.';
-
-  $('authSubmit').textContent=mode==='login'
-    ?'Anmelden':'Registrierung beantragen';
-
-  $('confirmRegisterField').style.display=
-    mode==='register'?'grid':'none';
-
-  $('registerConfirm').required=mode==='register';
-  $('loginPassword').minLength=mode==='register'?8:0;
-  $('loginPassword').autocomplete=
-    mode==='register'?'new-password':'current-password';
-
-  $('forgotPasswordBtn').style.display=
-    mode==='login'?'block':'none';
-
-  $('authMessage').textContent='';
+authMode=mode;
+$('loginTab').classList.toggle('selected',mode==='login');
+$('registerTab').classList.toggle('selected',mode==='register');
+$('authTitle').textContent=mode==='login'?'Zugang':'Registrierung';
+$('authDescription').textContent=mode==='login'
+?'Melde dich mit deinem persönlichen Mirage-Zugang an.'
+:'Erstelle deinen Zugang. Die Projektleitung muss dich anschließend freigeben.';
+$('authSubmit').textContent=mode==='login'?'Anmelden':'Registrierung beantragen';
+$('confirmRegisterField').style.display=mode==='register'?'grid':'none';
+$('registerConfirm').required=mode==='register';
+$('loginPassword').minLength=mode==='register'?8:0;
+$('forgotPasswordBtn').style.display=mode==='login'?'block':'none';
+$('authMessage').textContent='';
 }
 
 async function init(){
-  if(!window.supabase){
-    showAuth('Supabase konnte nicht geladen werden. Bitte Seite neu laden.');
-    return;
-  }
-
-  supabaseClient=window.supabase.createClient(
-    SUPABASE_URL,SUPABASE_ANON_KEY,{
-      auth:{
-        persistSession:true,
-        autoRefreshToken:true,
-        detectSessionInUrl:true
-      }
-    }
-  );
-
-  const query=new URLSearchParams(window.location.search);
-  const hash=new URLSearchParams(window.location.hash.slice(1));
-
-  passwordRecoveryActive=
-    query.get('type')==='recovery' ||
-    hash.get('type')==='recovery';
-
-  supabaseClient.auth.onAuthStateChange((event,session)=>{
-    if(event==='PASSWORD_RECOVERY'){
-      passwordRecoveryActive=true;
-      currentUser=session?.user||null;
-      showResetPanel();
-      return;
-    }
-
-    if(passwordRecoveryActive)return;
-
-    if(event==='SIGNED_OUT'){
-      sessionVersion++;
-      currentUser=null;
-      currentRole=null;
-      currentAlias=null;
-      currentApproved=false;
-      currentBan=null;
-      isOwner=false;
-      events=[];
-      stopRealtime();
-      showAuth();
-      return;
-    }
-
-    if(event==='SIGNED_IN' && session){
-      const changed=currentUser?.id!==session.user.id;
-      currentUser=session.user;
-      if(changed)sessionVersion++;
-
-      setTimeout(()=>{
-        if(!passwordRecoveryActive)enterCalendar();
-      },0);
-    }
-  });
-
-  const {data,error}=await supabaseClient.auth.getSession();
-
-  if(error){
-    showAuth('Anmeldung konnte nicht geprüft werden: '+error.message);
-    return;
-  }
-
-  if(passwordRecoveryActive){
-    showResetPanel();
-    return;
-  }
-
-  if(data.session){
-    currentUser=data.session.user;
-    await enterCalendar();
-  }else{
-    showAuth();
-  }
+if(!window.supabase){showAuth('Supabase konnte nicht geladen werden.');return}
+supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
+const query=new URLSearchParams(location.search);
+const hash=new URLSearchParams(location.hash.slice(1));
+passwordRecoveryActive=query.get('type')==='recovery'||hash.get('type')==='recovery';
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+if(event==='PASSWORD_RECOVERY'){
+passwordRecoveryActive=true;currentUser=session?.user||null;
+hideAllPanels();$('resetPanel').style.display='grid';return;
+}
+if(passwordRecoveryActive)return;
+if(event==='SIGNED_OUT'){
+sessionVersion++;currentUser=null;currentRole=null;currentAlias=null;
+currentApproved=false;currentBan=null;isOwner=false;events=[];
+stopRealtime();showAuth();return;
+}
+if(event==='SIGNED_IN'&&session){
+const changed=currentUser?.id!==session.user.id;
+currentUser=session.user;if(changed)sessionVersion++;
+setTimeout(()=>{if(!passwordRecoveryActive)enterCalendar()},0);
+}
+});
+const {data,error}=await supabaseClient.auth.getSession();
+if(error){showAuth(error.message);return}
+if(passwordRecoveryActive){hideAllPanels();$('resetPanel').style.display='grid';return}
+if(data.session){currentUser=data.session.user;await enterCalendar()}
+else showAuth();
 }
 
-/* BERECHTIGUNGEN, ALIAS UND BANNSTATUS */
 async function fetchPermissions(){
-  if(!currentUser)return null;
-
-  const {data,error}=await supabaseClient
-    .from('mirage_user_roles')
-    .select('role,approved,alias,banned_permanently,banned_until')
-    .eq('user_id',currentUser.id)
-    .maybeSingle();
-
-  if(error)throw error;
-  return data;
+if(!currentUser)return null;
+const {data,error}=await supabaseClient.from('mirage_user_roles')
+.select('role,approved,alias,banned_permanently,banned_until')
+.eq('user_id',currentUser.id).maybeSingle();
+if(error)throw error;
+return data;
 }
-
+function assignPermissions(d){
+currentRole=d?.role||null;
+currentAlias=d?.alias?.trim()||null;
+currentApproved=d?.approved===true;
+currentBan=d;
+isOwner=currentApproved&&!isActiveBan(d)&&currentRole==='projektleitung'
+&&currentUser?.email?.toLowerCase()===OWNER_EMAIL.toLowerCase();
+}
 async function enterCalendar(){
-  if(passwordRecoveryActive || !currentUser || enteringCalendar)return;
-
-  enteringCalendar=true;
-  const version=sessionVersion;
-
-  try{
-    const data=await fetchPermissions();
-
-    if(version!==sessionVersion || !currentUser)return;
-
-    currentRole=data?.role||null;
-    currentAlias=data?.alias?.trim()||null;
-    currentApproved=data?.approved===true;
-    currentBan=data;
-
-    isOwner=
-      currentApproved &&
-      !isActiveBan(data) &&
-      currentRole==='projektleitung' &&
-      currentUser.email?.toLowerCase()===OWNER_EMAIL.toLowerCase();
-
-    if(isActiveBan(data)){
-      showBan(data);
-      return;
-    }
-
-    if(!currentApproved){
-      stopRealtime();
-      events=[];
-      showPending();
-      return;
-    }
-
-    showApp();
-    await loadEvents();
-
-    if(version!==sessionVersion)return;
-
-    subscribeRealtime();
-    render();
-  }catch(error){
-    stopRealtime();
-    events=[];
-    currentApproved=false;
-    hideAllPanels();
-    $('authPanel').style.display='grid';
-    $('authMessage').textContent=
-      'Berechtigung konnte nicht geprüft werden: '+error.message;
-  }finally{
-    enteringCalendar=false;
-  }
+if(passwordRecoveryActive||!currentUser||enteringCalendar)return;
+enteringCalendar=true;
+const version=sessionVersion;
+try{
+const d=await fetchPermissions();
+if(version!==sessionVersion||!currentUser)return;
+assignPermissions(d);
+if(isActiveBan(d)){showBan(d);return}
+if(!currentApproved){stopRealtime();events=[];showPending();return}
+showApp();await loadEvents();
+if(version!==sessionVersion)return;
+subscribeRealtime();render();
+}catch(e){
+stopRealtime();events=[];currentApproved=false;
+hideAllPanels();$('authPanel').style.display='grid';
+$('authMessage').textContent='Berechtigung konnte nicht geprüft werden: '+e.message;
+}finally{enteringCalendar=false}
 }
-
 async function checkPermissions(){
-  if(checkingPermissions || enteringCalendar ||
-     !currentUser || passwordRecoveryActive)return;
-
-  checkingPermissions=true;
-  const version=sessionVersion;
-
-  try{
-    const data=await fetchPermissions();
-
-    if(version!==sessionVersion || !currentUser)return;
-
-    const banned=isActiveBan(data);
-    const approved=data?.approved===true;
-    const previousRole=currentRole;
-    const wasBanned=$('banPanel').style.display==='flex';
-    const wasPending=$('pendingPanel').style.display==='grid';
-
-    currentRole=data?.role||null;
-    currentAlias=data?.alias?.trim()||null;
-    currentApproved=approved;
-    currentBan=data;
-
-    isOwner=
-      approved && !banned &&
-      currentRole==='projektleitung' &&
-      currentUser.email?.toLowerCase()===OWNER_EMAIL.toLowerCase();
-
-    if(banned){
-      showBan(data);
-      return;
-    }
-
-    if(!approved){
-      stopRealtime();
-      events=[];
-      showPending();
-      return;
-    }
-
-    if(wasBanned || wasPending ||
-       $('calendarApp').style.display==='none'){
-      showApp();
-      await loadEvents();
-      subscribeRealtime();
-      render();
-      return;
-    }
-
-    showApp();
-
-    if(previousRole!==currentRole){
-      render();
-    }
-
-    if($('adminPanel').style.display==='block' && !isOwner){
-      $('adminPanel').style.display='none';
-    }
-  }catch(error){
-    console.error('Berechtigungsprüfung fehlgeschlagen:',error);
-    if($('banPanel').style.display==='flex'){
-      $('banStatusMessage').textContent=
-        'Verbindung wird erneut geprüft …';
-    }
-  }finally{
-    checkingPermissions=false;
-  }
+if(checkingPermissions||enteringCalendar||!currentUser||passwordRecoveryActive)return;
+checkingPermissions=true;const version=sessionVersion;
+try{
+const d=await fetchPermissions();
+if(version!==sessionVersion||!currentUser)return;
+const previousRole=currentRole;
+const wasHidden=$('calendarApp').style.display==='none';
+assignPermissions(d);
+if(isActiveBan(d)){showBan(d);return}
+if(!currentApproved){stopRealtime();events=[];showPending();return}
+showApp();
+if(wasHidden){await loadEvents();subscribeRealtime();render()}
+else if(previousRole!==currentRole)render();
+if(!isOwner)$('adminPanel').style.display='none';
+}catch(e){console.error('Berechtigungsprüfung:',e)}
+finally{checkingPermissions=false}
 }
-
-setInterval(()=>{
-  if(currentUser && !passwordRecoveryActive){
-    checkPermissions();
-  }
-},10000);
-
+setInterval(()=>{if(currentUser&&!passwordRecoveryActive)checkPermissions()},10000);
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden && currentUser){
-    checkPermissions();
-  }
+if(!document.hidden&&currentUser)checkPermissions();
 });
 
-/* LOGIN */
-async function login(email,password){
-  $('authMessage').textContent='Anmeldung läuft …';
-
-  const {data,error}=await supabaseClient.auth.signInWithPassword({
-    email,password
-  });
-
-  if(error){
-    $('authMessage').textContent=
-      'Anmeldung fehlgeschlagen: '+error.message;
-    return;
-  }
-
-  passwordRecoveryActive=false;
-  currentUser=data.user||data.session?.user||null;
-
-  if(currentUser){
-    await enterCalendar();
-  }else{
-    $('authMessage').textContent=
-      'Keine aktive Sitzung erhalten. Bitte erneut versuchen.';
-  }
-}
-
-async function register(email,password,confirmation){
-  const message=$('authMessage');
-
-  if(password.length<8){
-    message.textContent='Das Passwort muss mindestens 8 Zeichen haben.';
-    return;
-  }
-
-  if(password!==confirmation){
-    message.textContent='Die Passwörter stimmen nicht überein.';
-    return;
-  }
-
-  message.style.color='#91a6c2';
-  message.textContent='Registrierung wird durchgeführt …';
-
-  const {data,error}=await supabaseClient.auth.signUp({
-    email,password,
-    options:{
-      emailRedirectTo:window.location.origin+window.location.pathname
-    }
-  });
-
-  if(error){
-    message.style.color='#ff9eac';
-    message.textContent='Registrierung fehlgeschlagen: '+error.message;
-    return;
-  }
-
-  if(data.session && data.user){
-    currentUser=data.user;
-    await enterCalendar();
-    return;
-  }
-
-  message.style.color='#35d69a';
-  message.textContent=
-    'Registrierungsanfrage gesendet. Bitte bestätige gegebenenfalls deine E-Mail-Adresse. Danach muss die Projektleitung deinen Zugang freigeben.';
-}
-
+/* ANMELDUNG */
 $('loginTab').onclick=()=>setAuthMode('login');
 $('registerTab').onclick=()=>setAuthMode('register');
-
 $('loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-
-  const email=$('loginEmail').value.trim();
-  const password=$('loginPassword').value;
-
-  if(!supabaseClient){
-    $('authMessage').textContent=
-      'Verbindung noch nicht bereit. Bitte Seite neu laden.';
-    return;
-  }
-
-  $('authSubmit').disabled=true;
-
-  try{
-    if(authMode==='register'){
-      await register(email,password,$('registerConfirm').value);
-    }else{
-      await login(email,password);
-    }
-  }catch(error){
-    $('authMessage').style.color='#ff9eac';
-    $('authMessage').textContent='Fehler: '+error.message;
-  }finally{
-    $('authSubmit').disabled=false;
-  }
+e.preventDefault();
+const email=$('loginEmail').value.trim(),password=$('loginPassword').value;
+$('authSubmit').disabled=true;
+try{
+if(authMode==='register'){
+if(password.length<8)throw Error('Das Passwort muss mindestens 8 Zeichen haben.');
+if(password!==$('registerConfirm').value)throw Error('Passwörter stimmen nicht überein.');
+const {data,error}=await supabaseClient.auth.signUp({
+email,password,options:{emailRedirectTo:location.origin+location.pathname}
 });
-
+if(error)throw error;
+if(data.session&&data.user){currentUser=data.user;await enterCalendar()}
+else $('authMessage').textContent='Registriert. Bitte E-Mail bestätigen und auf Freigabe warten.';
+}else{
+const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+if(error)throw error;
+currentUser=data.user||data.session?.user;
+await enterCalendar();
+}
+}catch(err){$('authMessage').textContent='Fehler: '+err.message}
+finally{$('authSubmit').disabled=false}
+});
+async function logout(){await supabaseClient.auth.signOut()}
+$('pendingLogout').onclick=logout;
+$('banLogout').onclick=logout;
+$('logoutBtn').onclick=()=>{if(confirm('Wirklich abmelden?'))logout()};
 $('pendingRefresh').onclick=async()=>{
-  $('pendingMessage').textContent='Freigabe wird geprüft …';
-  await checkPermissions();
-
-  if(!currentApproved &&
-     $('pendingPanel').style.display==='grid'){
-    $('pendingMessage').textContent=
-      'Noch keine Freigabe vorhanden. Bitte versuche es später erneut.';
-  }
+$('pendingMessage').textContent='Freigabe wird geprüft …';
+await checkPermissions();
+if(!currentApproved&&$('pendingPanel').style.display==='grid')
+$('pendingMessage').textContent='Noch keine Freigabe vorhanden.';
 };
 
-$('pendingLogout').onclick=async()=>{
-  await supabaseClient.auth.signOut();
-};
-
-$('banLogout').onclick=async()=>{
-  await supabaseClient.auth.signOut();
-};
-
-$('logoutBtn').onclick=async()=>{
-  if(confirm('Möchtest du dich wirklich abmelden?')){
-    const {error}=await supabaseClient.auth.signOut();
-    if(error)alert('Abmelden fehlgeschlagen: '+error.message);
-  }
-};
-
-/* TERMINE LADEN */
+/* TERMINE */
 async function loadEvents(){
-  if(!supabaseClient || !currentUser || !currentApproved ||
-     isActiveBan(currentBan))return;
-
-  const version=sessionVersion;
-
-  const {data,error}=await supabaseClient
-    .from('mirage_events')
-    .select('*')
-    .order('event_date')
-    .order('start_time');
-
-  if(version!==sessionVersion)return;
-
-  if(error){
-    console.error('Termine konnten nicht geladen werden:',error);
-    return;
-  }
-
-  events=(data||[]).map(row=>({
-    id:row.id,
-    title:row.title,
-    category:row.category,
-    date:row.event_date,
-    start:String(row.start_time).slice(0,5),
-    end:String(row.end_time).slice(0,5),
-    description:row.description||''
-  }));
+if(!supabaseClient||!currentUser||!currentApproved||isActiveBan(currentBan))return;
+const version=sessionVersion;
+const {data,error}=await supabaseClient.from('mirage_events').select('*')
+.order('event_date').order('start_time');
+if(version!==sessionVersion)return;
+if(error){console.error(error);return}
+events=(data||[]).map(r=>({
+id:r.id,title:r.title,category:r.category,date:r.event_date,
+start:String(r.start_time).slice(0,5),end:String(r.end_time).slice(0,5),
+description:r.description||''
+}));
 }
-
 function subscribeRealtime(){
-  stopRealtime();
-
-  realtimeChannel=supabaseClient
-    .channel('mirage-calendar-live')
-    .on(
-      'postgres_changes',{
-        event:'*',
-        schema:'public',
-        table:'mirage_events'
-      },
-      async()=>{
-        await checkPermissions();
-
-        if(!currentApproved || isActiveBan(currentBan))return;
-
-        await loadEvents();
-        render();
-      }
-    )
-    .subscribe();
+stopRealtime();
+realtimeChannel=supabaseClient.channel('mirage-calendar-live')
+.on('postgres_changes',{event:'*',schema:'public',table:'mirage_events'},async()=>{
+await checkPermissions();
+if(!currentApproved||isActiveBan(currentBan))return;
+await loadEvents();render();
+}).subscribe();
 }
-
-/* WOCHENKALENDER */
 function render(){
-  if(!currentApproved || isActiveBan(currentBan))return;
-
-  const mon=weekStart();
-  const sun=new Date(mon);
-  sun.setDate(sun.getDate()+6);
-
-  $('weekLabel').textContent=
-    `${fmt(mon,{day:'2-digit',month:'long'})} – `+
-    `${fmt(sun,{day:'2-digit',month:'long',year:'numeric'})}`;
-
-  const head=$('head');
-  const body=$('body');
-
-  head.innerHTML='<div class="blank"></div>';
-  body.innerHTML='';
-
-  const days=[];
-
-  for(let i=0;i<7;i++){
-    const d=new Date(mon);
-    d.setDate(d.getDate()+i);
-    days.push(d);
-
-    const today=dateKey(d)===dateKey(new Date());
-    const el=document.createElement('div');
-
-    el.className='dayhead'+(today?' today':'');
-
-    el.innerHTML=
-      `<div class="dow">${fmt(d,{weekday:'short'}).toUpperCase()}</div>`+
-      `<div class="num">${d.getDate()}</div>`+
-      `${today?'<div class="todaylabel">HEUTE</div>':''}`;
-
-    head.append(el);
-  }
-
-  const timeCol=document.createElement('div');
-  timeCol.className='times';
-
-  for(let h=START_HOUR;h<END_HOUR;h++){
-    const t=document.createElement('div');
-    t.className='time';
-    t.textContent=pad(h)+':00';
-    timeCol.append(t);
-  }
-
-  body.append(timeCol);
-
-  days.forEach(d=>{
-    const col=document.createElement('div');
-
-    col.className='daycol'+
-      (dateKey(d)===dateKey(new Date())?' today':'');
-
-    for(let h=START_HOUR;h<END_HOUR;h++){
-      const slot=document.createElement('div');
-      slot.className='slot'+(canEdit()?'':' readonly');
-
-      slot.title=canEdit()
-        ?'Klicken, um einen Termin einzutragen'
-        :'Nur-Lese-Zugriff';
-
-      if(canEdit()){
-        slot.addEventListener('click',()=>{
-          openForm({
-            date:dateKey(d),
-            start:`${pad(h)}:00`,
-            end:h===23?'23:59':`${pad(h+1)}:00`
-          });
-        });
-      }
-
-      col.append(slot);
-    }
-
-    events.filter(e=>e.date===dateKey(d)).forEach(e=>{
-      const top=(minutes(e.start)-START_HOUR*60)/60*64;
-      const height=(minutes(e.end)-minutes(e.start))/60*64;
-
-      if(top<0 || top>=(END_HOUR-START_HOUR)*64)return;
-
-      const box=document.createElement('div');
-      box.className='event '+e.category;
-      box.style.top=top+'px';
-      box.style.height=Math.max(27,height-3)+'px';
-
-      box.innerHTML=
-        `<b>${escapeHTML(e.title)}</b>`+
-        `<small>${e.start}–${e.end}`+
-        `${e.description?' · '+escapeHTML(e.description):''}</small>`;
-
-      box.addEventListener('click',ev=>{
-        ev.stopPropagation();
-
-        if(canEdit()){
-          openForm(e);
-        }else{
-          alert(
-            e.title+'\n'+e.date+
-            '\n'+e.start+' – '+e.end+
-            (e.description?'\n\n'+e.description:'')
-          );
-        }
-      });
-
-      col.append(box);
-    });
-
-    body.append(col);
-  });
+if(!currentApproved||isActiveBan(currentBan))return;
+const mon=weekStart(),sun=new Date(mon);
+sun.setDate(sun.getDate()+6);
+$('weekLabel').textContent=
+fmt(mon,{day:'2-digit',month:'long'})+' – '+
+fmt(sun,{day:'2-digit',month:'long',year:'numeric'});
+const head=$('head'),body=$('body');
+head.innerHTML='<div class="blank"></div>';
+body.innerHTML='';
+const days=[];
+for(let i=0;i<7;i++){
+const d=new Date(mon);d.setDate(d.getDate()+i);days.push(d);
+const today=dateKey(d)===dateKey(new Date());
+const el=document.createElement('div');
+el.className='dayhead'+(today?' today':'');
+el.innerHTML='<div class="dow">'+fmt(d,{weekday:'short'}).toUpperCase()+'</div>'+
+'<div class="num">'+d.getDate()+'</div>'+
+(today?'<div class="todaylabel">HEUTE</div>':'');
+head.append(el);
 }
-
-function openForm(e={}){
-  if(!canEdit())return;
-
-  $('form').reset();
-  $('eventId').value=e.id||'';
-  $('title').value=e.title||'';
-  $('category').value=e.category||'blue';
-  $('date').value=e.date||dateKey(new Date());
-  $('start').value=e.start||'19:00';
-  $('end').value=e.end||'20:00';
-  $('description').value=e.description||'';
-
-  $('modalTitle').textContent=
-    e.id?'Termin bearbeiten':'Neuen Termin erstellen';
-
-  $('delete').style.display=e.id?'inline-block':'none';
-  $('backdrop').classList.add('open');
-  $('title').focus();
+const timeCol=document.createElement('div');timeCol.className='times';
+for(let h=START_HOUR;h<END_HOUR;h++){
+const t=document.createElement('div');t.className='time';
+t.textContent=pad(h)+':00';timeCol.append(t);
 }
-
-function closeForm(){
-  $('backdrop').classList.remove('open');
-}
-
-$('form').addEventListener('submit',async ev=>{
-  ev.preventDefault();
-
-  await checkPermissions();
-  if(!canEdit())return;
-
-  const start=$('start').value;
-  const end=$('end').value;
-
-  if(minutes(end)<=minutes(start)){
-    alert('Die Endzeit muss nach der Startzeit liegen.');
-    return;
-  }
-
-  const id=$('eventId').value;
-
-  const item={
-    title:$('title').value.trim(),
-    category:$('category').value,
-    event_date:$('date').value,
-    start_time:start,
-    end_time:end,
-    description:$('description').value.trim()
-  };
-
-  if(!item.title || !item.event_date)return;
-
-  let result;
-
-  if(id){
-    result=await supabaseClient
-      .from('mirage_events')
-      .update(item)
-      .eq('id',id);
-  }else{
-    result=await supabaseClient
-      .from('mirage_events')
-      .insert({
-        ...item,
-        created_by:currentUser.id
-      });
-  }
-
-  if(result.error){
-    alert('Speichern fehlgeschlagen: '+result.error.message);
-    return;
-  }
-
-  closeForm();
-  await loadEvents();
-  render();
+body.append(timeCol);
+days.forEach(d=>{
+const col=document.createElement('div');
+col.className='daycol'+(dateKey(d)===dateKey(new Date())?' today':'');
+for(let h=START_HOUR;h<END_HOUR;h++){
+const slot=document.createElement('div');
+slot.className='slot'+(canEdit()?'':' readonly');
+if(canEdit())slot.onclick=()=>openForm({
+date:dateKey(d),start:pad(h)+':00',end:h===23?'23:59':pad(h+1)+':00'
 });
-
-$('delete').onclick=async()=>{
-  await checkPermissions();
-  if(!canEdit())return;
-
-  const id=$('eventId').value;
-
-  if(id && confirm('Diesen Termin wirklich löschen?')){
-    const {error}=await supabaseClient
-      .from('mirage_events')
-      .delete()
-      .eq('id',id);
-
-    if(error){
-      alert('Löschen fehlgeschlagen: '+error.message);
-      return;
-    }
-
-    closeForm();
-    await loadEvents();
-    render();
-  }
+col.append(slot);
+}
+events.filter(e=>e.date===dateKey(d)).forEach(e=>{
+const top=(minutes(e.start)-START_HOUR*60)/60*64;
+const height=(minutes(e.end)-minutes(e.start))/60*64;
+if(top<0||top>=(END_HOUR-START_HOUR)*64)return;
+const box=document.createElement('div');
+box.className='event '+e.category;
+box.style.top=top+'px';box.style.height=Math.max(27,height-3)+'px';
+box.innerHTML='<b>'+escapeHTML(e.title)+'</b><small>'+
+e.start+'–'+e.end+
+(e.description?' · '+escapeHTML(e.description):'')+'</small>';
+box.onclick=ev=>{
+ev.stopPropagation();
+if(canEdit())openForm(e);
+else alert(e.title+'\n'+e.date+'\n'+e.start+' – '+e.end+
+(e.description?'\n\n'+e.description:''));
 };
-
+col.append(box);
+});
+body.append(col);
+});
+}
+function openForm(e={}){
+if(!canEdit())return;
+$('form').reset();
+$('eventId').value=e.id||'';
+$('title').value=e.title||'';
+$('category').value=e.category||'blue';
+$('date').value=e.date||dateKey(new Date());
+$('start').value=e.start||'19:00';
+$('end').value=e.end||'20:00';
+$('description').value=e.description||'';
+$('modalTitle').textContent=e.id?'Termin bearbeiten':'Neuen Termin erstellen';
+$('delete').style.display=e.id?'inline-block':'none';
+$('backdrop').classList.add('open');
+}
+function closeForm(){$('backdrop').classList.remove('open')}
+$('form').addEventListener('submit',async ev=>{
+ev.preventDefault();await checkPermissions();if(!canEdit())return;
+if(minutes($('end').value)<=minutes($('start').value)){
+alert('Endzeit muss nach Startzeit liegen.');return;
+}
+const id=$('eventId').value;
+const item={
+title:$('title').value.trim(),category:$('category').value,
+event_date:$('date').value,start_time:$('start').value,
+end_time:$('end').value,description:$('description').value.trim()
+};
+if(!item.title||!item.event_date)return;
+const result=id
+?await supabaseClient.from('mirage_events').update(item).eq('id',id)
+:await supabaseClient.from('mirage_events').insert({...item,created_by:currentUser.id});
+if(result.error){alert('Fehler: '+result.error.message);return}
+closeForm();await loadEvents();render();
+});
+$('delete').onclick=async()=>{
+await checkPermissions();if(!canEdit())return;
+const id=$('eventId').value;
+if(id&&confirm('Termin wirklich löschen?')){
+const {error}=await supabaseClient.from('mirage_events').delete().eq('id',id);
+if(error){alert(error.message);return}
+closeForm();await loadEvents();render();
+}
+};
 $('prev').onclick=()=>{offset--;render()};
 $('next').onclick=()=>{offset++;render()};
 $('todayBtn').onclick=()=>{offset=0;render()};
@@ -1403,444 +696,262 @@ $('newTop').onclick=()=>openForm();
 $('newToolbar').onclick=()=>openForm();
 $('close').onclick=closeForm;
 $('cancel').onclick=closeForm;
-
-$('backdrop').onclick=e=>{
-  if(e.target===$('backdrop'))closeForm();
-};
-
+$('backdrop').onclick=e=>{if(e.target===$('backdrop'))closeForm()};
 let lastDate=dateKey(new Date());
-
 setInterval(()=>{
-  const now=dateKey(new Date());
-
-  if(now!==lastDate){
-    lastDate=now;
-    offset=0;
-    if(currentApproved)render();
-  }
+const now=dateKey(new Date());
+if(now!==lastDate){lastDate=now;offset=0;if(currentApproved)render()}
 },30000);
-
 setInterval(async()=>{
-  if(currentUser && currentApproved && !document.hidden){
-    await checkPermissions();
-
-    if(currentApproved && !isActiveBan(currentBan)){
-      await loadEvents();
-      render();
-    }
-  }
+if(currentUser&&currentApproved&&!document.hidden){
+await checkPermissions();
+if(currentApproved&&!isActiveBan(currentBan)){await loadEvents();render()}
+}
 },60000);
 
-/* PASSWORT VERGESSEN */
+/* PASSWORT */
 $('forgotPasswordBtn').onclick=async()=>{
-  const email=$('loginEmail').value.trim();
-
-  if(!email){
-    $('authMessage').textContent=
-      'Bitte gib zuerst deine E-Mail-Adresse ein.';
-    return;
-  }
-
-  $('authMessage').textContent=
-    'Wiederherstellungs-E-Mail wird angefordert ...';
-
-  const {error}=await supabaseClient.auth.resetPasswordForEmail(
-    email,{
-      redirectTo:window.location.origin+window.location.pathname
-    }
-  );
-
-  $('authMessage').textContent=error
-    ?'Fehler: '+error.message
-    :'Falls die Adresse registriert ist, erhältst du eine E-Mail.';
+const email=$('loginEmail').value.trim();
+if(!email){$('authMessage').textContent='Bitte E-Mail-Adresse eingeben.';return}
+const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{
+redirectTo:location.origin+location.pathname
+});
+$('authMessage').textContent=error?'Fehler: '+error.message:
+'Falls die Adresse registriert ist, erhältst du eine E-Mail.';
 };
-
 $('resetPasswordForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-
-  const password=$('newPassword').value;
-  const confirmation=$('confirmPassword').value;
-  const message=$('resetMessage');
-
-  if(password!==confirmation){
-    message.textContent='Die Passwörter stimmen nicht überein.';
-    return;
-  }
-
-  if(password.length<8){
-    message.textContent='Das Passwort muss mindestens 8 Zeichen haben.';
-    return;
-  }
-
-  message.textContent='Passwort wird gespeichert ...';
-
-  const {error}=await supabaseClient.auth.updateUser({password});
-
-  if(error){
-    message.textContent='Fehler: '+error.message;
-    return;
-  }
-
-  message.style.color='#35d69a';
-  message.textContent='Passwort erfolgreich geändert!';
-
-  const {error:signOutError}=await supabaseClient.auth.signOut();
-
-  if(signOutError){
-    message.textContent=
-      'Passwort geändert, aber Abmeldung fehlgeschlagen: '+
-      signOutError.message;
-    return;
-  }
-
-  passwordRecoveryActive=false;
-  currentUser=null;
-  window.history.replaceState({},'',window.location.pathname);
-  showAuth('Passwort geändert. Bitte melde dich erneut an.');
+e.preventDefault();
+const password=$('newPassword').value;
+if(password!==$('confirmPassword').value){
+$('resetMessage').textContent='Passwörter stimmen nicht überein.';return;
+}
+if(password.length<8){$('resetMessage').textContent='Mindestens 8 Zeichen erforderlich.';return}
+const {error}=await supabaseClient.auth.updateUser({password});
+if(error){$('resetMessage').textContent=error.message;return}
+const {error:signOutError}=await supabaseClient.auth.signOut();
+if(signOutError){$('resetMessage').textContent=signOutError.message;return}
+passwordRecoveryActive=false;currentUser=null;
+history.replaceState({},'',location.pathname);
+showAuth('Passwort geändert. Bitte erneut anmelden.');
 });
 
-/* ADMIN-BEREICH */
+/* ADMIN */
 $('adminBtn').onclick=async()=>{
-  if(!isOwner)return;
-
-  $('adminPanel').style.display='block';
-  await loadAdminUsers();
-  $('adminPanel').scrollIntoView({behavior:'smooth'});
+if(!isOwner)return;
+$('adminPanel').style.display='block';
+await loadAdminUsers();
+$('adminPanel').scrollIntoView({behavior:'smooth'});
 };
+$('adminClose').onclick=()=>{$('adminPanel').style.display='none'};
 
-$('adminClose').onclick=()=>{
-  $('adminPanel').style.display='none';
-};
-
-/* BANNFENSTER */
+/* BANNS */
 function openBanModal(user){
-  if(!isOwner || user.user_id===currentUser.id)return;
-
-  banTarget=user;
-  $('banTargetEmail').textContent=user.alias||user.email||'Unbekannt';
-  $('banType').value='temporary';
-  $('banDays').value='7';
-  $('banDaysField').style.display='grid';
-  $('banModalMessage').textContent='';
-  $('banBackdrop').classList.add('open');
+if(!isOwner||user.user_id===currentUser.id)return;
+banTarget=user;
+$('banTargetEmail').textContent=user.alias||user.email||'Unbekannt';
+$('banType').value='temporary';$('banDays').value='7';
+$('banDaysField').style.display='grid';
+$('banModalMessage').textContent='';
+$('banBackdrop').classList.add('open');
 }
-
 function closeBanModal(){
-  $('banBackdrop').classList.remove('open');
-  banTarget=null;
+$('banBackdrop').classList.remove('open');banTarget=null;
 }
-
 $('banType').onchange=()=>{
-  const temporary=$('banType').value==='temporary';
-  $('banDaysField').style.display=temporary?'grid':'none';
-  $('banDays').required=temporary;
+const temp=$('banType').value==='temporary';
+$('banDaysField').style.display=temp?'grid':'none';
+$('banDays').required=temp;
 };
-
 $('banModalClose').onclick=closeBanModal;
 $('banModalCancel').onclick=closeBanModal;
-
-$('banBackdrop').onclick=e=>{
-  if(e.target===$('banBackdrop'))closeBanModal();
-};
-
+$('banBackdrop').onclick=e=>{if(e.target===$('banBackdrop'))closeBanModal()};
 $('banConfirm').onclick=async()=>{
-  if(!isOwner || !banTarget)return;
-
-  const type=$('banType').value;
-  const days=Number($('banDays').value);
-
-  if(type==='temporary' &&
-     (!Number.isInteger(days) || days<1 || days>36500)){
-    $('banModalMessage').textContent=
-      'Bitte gib eine gültige Anzahl an Tagen ein.';
-    return;
-  }
-
-  const message=type==='permanent'
-    ?'Möchtest du diesen Benutzer wirklich PERMANENT bannen?'
-    :`Möchtest du diesen Benutzer für ${days} Tag(e) bannen?`;
-
-  if(!confirm(message))return;
-
-  $('banConfirm').disabled=true;
-  $('banModalMessage').textContent='Bann wird gespeichert …';
-
-  const {error}=await supabaseClient.rpc('mirage_admin_set_ban',{
-    p_user_id:banTarget.user_id,
-    p_ban_type:type,
-    p_days:type==='temporary'?days:null
-  });
-
-  $('banConfirm').disabled=false;
-
-  if(error){
-    $('banModalMessage').textContent='Fehler: '+error.message;
-    return;
-  }
-
-  closeBanModal();
-  $('adminMessage').textContent='Benutzer erfolgreich gebannt.';
-  await loadAdminUsers();
+if(!isOwner||!banTarget)return;
+const type=$('banType').value,days=Number($('banDays').value);
+if(type==='temporary'&&(!Number.isInteger(days)||days<1||days>36500)){
+$('banModalMessage').textContent='Ungültige Anzahl an Tagen.';return;
+}
+if(!confirm(type==='permanent'?'Benutzer permanent bannen?':
+`Benutzer für ${days} Tage bannen?`))return;
+$('banConfirm').disabled=true;
+const {error}=await supabaseClient.rpc('mirage_admin_set_ban',{
+p_user_id:banTarget.user_id,p_ban_type:type,p_days:type==='temporary'?days:null
+});
+$('banConfirm').disabled=false;
+if(error){$('banModalMessage').textContent=error.message;return}
+closeBanModal();
+$('adminMessage').textContent='Benutzer erfolgreich gebannt.';
+await loadAdminUsers();
 };
-
 async function unbanUser(user){
-  if(!isOwner || user.user_id===currentUser.id)return;
-
-  if(!confirm(
-    `Möchtest du den Bann für ${user.alias||user.email} wirklich aufheben?`
-  ))return;
-
-  const {error}=await supabaseClient.rpc('mirage_admin_set_ban',{
-    p_user_id:user.user_id,
-    p_ban_type:'unban',
-    p_days:null
-  });
-
-  if(error){
-    $('adminMessage').textContent='Fehler: '+error.message;
-    return;
-  }
-
-  $('adminMessage').textContent='Bann erfolgreich aufgehoben.';
-  await loadAdminUsers();
+if(!isOwner||user.user_id===currentUser.id)return;
+if(!confirm('Bann für '+(user.alias||user.email)+' aufheben?'))return;
+const {error}=await supabaseClient.rpc('mirage_admin_set_ban',{
+p_user_id:user.user_id,p_ban_type:'unban',p_days:null
+});
+if(error){$('adminMessage').textContent=error.message;return}
+await loadAdminUsers();
+$('adminMessage').textContent='Bann erfolgreich aufgehoben.';
 }
 
-/* BENUTZERLISTE UND ALIAS-VERWALTUNG */
+/* NEUE BENUTZERKARTEN */
 async function loadAdminUsers(){
-  if(!isOwner)return;
+if(!isOwner)return;
+const target=$('adminUsers');
+target.textContent='Benutzer werden geladen …';
+const {data,error}=await supabaseClient.rpc('mirage_admin_list_users');
+if(error){target.textContent='Fehler: '+error.message;return}
+target.innerHTML='';
+for(const user of data||[]){
+const own=user.user_id===currentUser.id;
+const banned=isActiveBan(user);
+const row=document.createElement('article');
+row.className='admin-row';
 
-  const target=$('adminUsers');
-  target.textContent='Benutzer werden geladen …';
+const header=document.createElement('div');
+header.className='admin-user-header';
+const identity=document.createElement('div');
+identity.className='admin-identity';
+const avatar=document.createElement('div');
+avatar.className='admin-avatar';
+avatar.textContent=own?'♛':'♙';
 
-  const {data,error}=await supabaseClient.rpc(
-    'mirage_admin_list_users'
-  );
+const names=document.createElement('div');
+const displayName=document.createElement('div');
+displayName.className='admin-name';
+displayName.textContent=user.alias?.trim()||'Alias noch nicht vergeben';
+const email=document.createElement('div');
+email.className='admin-email';
+email.textContent=user.email||'Ohne E-Mail';
+names.append(displayName,email);
+identity.append(avatar,names);
 
-  if(error){
-    target.textContent=
-      'Benutzer konnten nicht geladen werden: '+error.message;
-    return;
-  }
+const state=document.createElement('div');
+state.className='admin-status';
+if(banned){
+state.classList.add('banned');
+state.textContent=user.banned_permanently?'⛔ Permanent gesperrt':
+'⛔ Gesperrt bis '+fmt(new Date(user.banned_until),{
+day:'2-digit',month:'2-digit',year:'numeric',
+hour:'2-digit',minute:'2-digit',timeZone:'Europe/Berlin'
+})+' Uhr';
+}else if(user.approved){
+state.textContent='● Freigeschaltet';
+}else{
+state.classList.add('pending');
+state.textContent='● Wartet auf Freigabe';
+}
+header.append(identity,state);
 
-  target.innerHTML='';
+const fields=document.createElement('div');
+fields.className='admin-fields';
 
-  for(const user of data||[]){
-    const row=document.createElement('div');
-    row.className='admin-row';
+const aliasField=document.createElement('div');
+aliasField.className='admin-field';
+const aliasLabel=document.createElement('label');
+aliasLabel.textContent='Benutzeralias';
+const aliasInput=document.createElement('input');
+aliasInput.type='text';
+aliasInput.minLength=2;aliasInput.maxLength=40;
+aliasInput.placeholder='Alias vergeben';
+aliasInput.value=user.alias||'';
+aliasField.append(aliasLabel,aliasInput);
 
-    const info=document.createElement('div');
+const roleField=document.createElement('div');
+roleField.className='admin-field';
+const roleLabel=document.createElement('label');
+roleLabel.textContent='Rang / Berechtigung';
+const select=document.createElement('select');
+for(const [value,label] of [
+['zuschauer','Zuschauer'],
+['administrator','Administrator'],
+['projektleitung','Projektleitung']
+]){
+const opt=document.createElement('option');
+opt.value=value;opt.textContent=label;select.append(opt);
+}
+select.value=user.role||'zuschauer';
+select.disabled=own;
+roleField.append(roleLabel,select);
+fields.append(aliasField,roleField);
 
-    const email=document.createElement('strong');
-    email.textContent=user.email||'Ohne E-Mail';
+const actions=document.createElement('div');
+actions.className='admin-actions';
 
-    const state=document.createElement('div');
-    state.className='admin-status';
+const aliasSave=document.createElement('button');
+aliasSave.className='btn primary';
+aliasSave.textContent='Alias speichern';
+aliasSave.onclick=async()=>{
+const value=aliasInput.value.trim();
+if(value.length<2||value.length>40){
+$('adminMessage').textContent='Alias muss 2 bis 40 Zeichen haben.';return;
+}
+aliasSave.disabled=true;
+const {error}=await supabaseClient.rpc('mirage_admin_set_alias',{
+p_user_id:user.user_id,p_alias:value
+});
+if(error){
+$('adminMessage').textContent='Fehler: '+error.message;
+aliasSave.disabled=false;return;
+}
+if(own){currentAlias=value;showApp()}
+await loadAdminUsers();
+$('adminMessage').textContent='Alias gespeichert.';
+};
+actions.append(aliasSave);
 
-    const banned=isActiveBan(user);
+if(own){
+const note=document.createElement('span');
+note.className='admin-owner-note';
+note.textContent='♛ Eigentümer · Rang und Freigabe geschützt';
+actions.append(note);
+}else{
+const save=document.createElement('button');
+save.className='btn';save.textContent='Rolle speichern';
 
-    if(banned){
-      state.classList.add('banned');
+const approvalButton=document.createElement('button');
+approvalButton.className='btn '+(user.approved?'danger':'primary');
+approvalButton.textContent=user.approved?'Freigabe entziehen':'Freigeben';
 
-      if(user.banned_permanently){
-        state.textContent='⛔ PERMANENT GEBANNT';
-      }else{
-        const end=new Date(user.banned_until);
+async function change(approved){
+approvalButton.disabled=true;save.disabled=true;
+const {error}=await supabaseClient.rpc('mirage_admin_set_user',{
+p_user_id:user.user_id,p_role:select.value,p_approved:approved
+});
+if(error){
+$('adminMessage').textContent='Fehler: '+error.message;
+approvalButton.disabled=false;save.disabled=false;return;
+}
+await loadAdminUsers();
+$('adminMessage').textContent='Änderung gespeichert.';
+}
+save.onclick=()=>change(user.approved);
+approvalButton.onclick=()=>{
+if(confirm(user.approved?'Freigabe wirklich entziehen?':'Benutzer freigeben?'))
+change(!user.approved);
+};
+actions.append(save,approvalButton);
 
-        state.textContent=
-          '⛔ GEBANNT BIS '+
-          fmt(end,{
-            day:'2-digit',month:'2-digit',year:'numeric',
-            hour:'2-digit',minute:'2-digit',
-            timeZone:'Europe/Berlin'
-          })+' Uhr';
-      }
-    }else{
-      state.textContent=user.approved
-        ?'Freigeschaltet'
-        :'Wartet auf Freigabe';
-    }
-
-    /* ALIAS-EINGABE */
-    const aliasField=document.createElement('div');
-    aliasField.className='alias-field';
-
-    const aliasInput=document.createElement('input');
-    aliasInput.type='text';
-    aliasInput.maxLength=40;
-    aliasInput.minLength=2;
-    aliasInput.placeholder='Alias vergeben';
-    aliasInput.value=user.alias||'';
-    aliasInput.setAttribute('aria-label','Alias für '+(user.email||'Benutzer'));
-
-    const aliasSave=document.createElement('button');
-    aliasSave.className='btn primary';
-    aliasSave.textContent='Alias speichern';
-
-    aliasSave.onclick=async()=>{
-      if(!isOwner)return;
-
-      const value=aliasInput.value.trim();
-
-      if(value.length<2 || value.length>40){
-        $('adminMessage').textContent=
-          'Der Alias muss zwischen 2 und 40 Zeichen haben.';
-        return;
-      }
-
-      aliasSave.disabled=true;
-      $('adminMessage').textContent='Alias wird gespeichert …';
-
-      const {error}=await supabaseClient.rpc(
-        'mirage_admin_set_alias',{
-          p_user_id:user.user_id,
-          p_alias:value
-        }
-      );
-
-      if(error){
-        $('adminMessage').textContent=
-          'Alias konnte nicht gespeichert werden: '+error.message;
-        aliasSave.disabled=false;
-        return;
-      }
-
-      if(user.user_id===currentUser.id){
-        currentAlias=value;
-        showApp();
-      }
-
-      await loadAdminUsers();
-      $('adminMessage').textContent='Alias erfolgreich gespeichert.';
-    };
-
-    aliasField.append(aliasInput,aliasSave);
-    info.append(email,state,aliasField);
-
-    /* ROLLENAUSWAHL */
-    const select=document.createElement('select');
-
-    const roles=[
-      ['zuschauer','Zuschauer'],
-      ['administrator','Administrator'],
-      ['projektleitung','Projektleitung']
-    ];
-
-    for(const [value,label] of roles){
-      const opt=document.createElement('option');
-      opt.value=value;
-      opt.textContent=label;
-      select.append(opt);
-    }
-
-    select.value=user.role||'zuschauer';
-
-    const actions=document.createElement('div');
-    actions.className='admin-actions';
-
-    const approvalButton=document.createElement('button');
-    approvalButton.className='btn '+(user.approved?'danger':'primary');
-    approvalButton.textContent=user.approved
-      ?'Freigabe entziehen'
-      :'Freigeben';
-
-    const save=document.createElement('button');
-    save.className='btn';
-    save.textContent='Rolle speichern';
-
-    const isSelf=user.user_id===currentUser.id;
-
-    if(isSelf){
-      select.disabled=true;
-      approvalButton.disabled=true;
-      save.disabled=true;
-    }
-
-    approvalButton.onclick=async()=>{
-      if(!isOwner || isSelf)return;
-
-      const nextApproved=!user.approved;
-
-      if(!confirm(
-        nextApproved
-          ?'Möchtest du diesen Benutzer freigeben?'
-          :'Möchtest du diesem Benutzer die Freigabe entziehen?'
-      ))return;
-
-      approvalButton.disabled=true;
-
-      const {error}=await supabaseClient.rpc(
-        'mirage_admin_set_user',{
-          p_user_id:user.user_id,
-          p_role:select.value,
-          p_approved:nextApproved
-        }
-      );
-
-      if(error){
-        $('adminMessage').textContent=
-          'Fehler: '+error.message;
-        approvalButton.disabled=false;
-        return;
-      }
-
-      $('adminMessage').textContent=
-        nextApproved?'Benutzer freigegeben.':'Freigabe entzogen.';
-
-      await loadAdminUsers();
-    };
-
-    save.onclick=async()=>{
-      if(!isOwner || isSelf)return;
-
-      save.disabled=true;
-
-      const {error}=await supabaseClient.rpc(
-        'mirage_admin_set_user',{
-          p_user_id:user.user_id,
-          p_role:select.value,
-          p_approved:user.approved
-        }
-      );
-
-      if(error){
-        $('adminMessage').textContent=
-          'Rolle konnte nicht gespeichert werden: '+error.message;
-        save.disabled=false;
-        return;
-      }
-
-      $('adminMessage').textContent='Rolle erfolgreich gespeichert.';
-      await loadAdminUsers();
-    };
-
-    actions.append(approvalButton,save);
-
-    if(!isSelf){
-      if(banned){
-        const unbanButton=document.createElement('button');
-        unbanButton.className='btn primary';
-        unbanButton.textContent='🔓 Entsperren';
-        unbanButton.onclick=()=>unbanUser(user);
-        actions.append(unbanButton);
-      }else{
-        const banButton=document.createElement('button');
-        banButton.className='btn ban';
-        banButton.textContent='⛔ Sperren / Bannen';
-        banButton.onclick=()=>openBanModal(user);
-        actions.append(banButton);
-      }
-    }
-
-    row.append(info,select,actions);
-    target.append(row);
-  }
-
-  if(!data?.length){
-    target.textContent='Keine Benutzer vorhanden.';
-  }
+if(banned){
+const unbanButton=document.createElement('button');
+unbanButton.className='btn';
+unbanButton.textContent='🔓 Bann aufheben';
+unbanButton.onclick=()=>unbanUser(user);
+actions.append(unbanButton);
+}else{
+const banButton=document.createElement('button');
+banButton.className='btn ban';
+banButton.textContent='⛔ Sperren / Bannen';
+banButton.onclick=()=>openBanModal(user);
+actions.append(banButton);
+}
+}
+row.append(header,fields,actions);
+target.append(row);
+}
+if(!data?.length)target.textContent='Noch keine Benutzer vorhanden.';
 }
 
-/* START */
 init();
 </script>
 </body>
