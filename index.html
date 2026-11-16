@@ -104,7 +104,41 @@ button{cursor:pointer}
 <p style="color:var(--muted);font-size:10px">Zugänge werden ausschließlich durch die Administration freigeschaltet.</p>
 </form>
 </div>
+ 
+<div id="resetPanel" style="display:none;min-height:100vh;place-items:center;padding:22px">
+  <form id="resetPasswordForm" class="modal" style="width:min(420px,100%)">
+    <div class="brand" style="margin-bottom:20px">
+      <div class="logo">M</div>
+      <div>
+        <b>MIRAGE</b>
+        <small>LEADERSHIP MANAGEMENT</small>
+      </div>
+    </div>
 
+    <h2>Neues Passwort festlegen</h2>
+    <p style="color:var(--muted)">
+      Bitte lege dein neues Passwort für deinen Mirage-Zugang fest.
+    </p>
+
+    <div class="field">
+      <label for="newPassword">Neues Passwort</label>
+      <input id="newPassword" type="password"
+             autocomplete="new-password" minlength="8" required>
+    </div>
+
+    <div class="field">
+      <label for="confirmPassword">Passwort bestätigen</label>
+      <input id="confirmPassword" type="password"
+             autocomplete="new-password" minlength="8" required>
+    </div>
+
+    <button class="btn primary" type="submit" style="width:100%">
+      Neues Passwort speichern
+    </button>
+
+    <p id="resetMessage" style="font-size:12px;min-height:18px"></p>
+  </form>
+</div>
 <div class="shell" id="calendarApp" style="display:none">
 <header class="top">
 <div class="brand"><div class="logo">M</div><div><b>MIRAGE</b><small>LEADERSHIP MANAGEMENT</small></div></div>
@@ -293,7 +327,13 @@ setInterval(async()=>{
  if(currentUser&&!document.hidden){await loadEvents();render()}
 },60000);
  
-return;
+$('forgotPasswordBtn').addEventListener('click', async () => {
+  const email = $('loginEmail').value.trim();
+
+  if (!email) {
+    $('authMessage').textContent =
+      'Bitte gib zuerst deine E-Mail-Adresse ein.';
+    return;
   }
 
   $('authMessage').textContent =
