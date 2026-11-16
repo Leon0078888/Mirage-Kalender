@@ -292,7 +292,28 @@ setInterval(()=>{
 setInterval(async()=>{
  if(currentUser&&!document.hidden){await loadEvents();render()}
 },60000);
+ 
+return;
+  }
 
+  $('authMessage').textContent =
+    'Wiederherstellungs-E-Mail wird angefordert ...';
+
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(
+    email,
+    {
+      redirectTo: window.location.origin + window.location.pathname
+    }
+  );
+
+  if (error) {
+    $('authMessage').textContent =
+      'Fehler: ' + error.message;
+  } else {
+    $('authMessage').textContent =
+      'Falls die Adresse registriert ist, erhältst du eine E-Mail.';
+  }
+});
 init();
 </script>
 </body>
