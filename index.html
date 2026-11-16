@@ -270,7 +270,9 @@ function activeBan(x){
 return !!(x?.banned_permanently||(x?.banned_until&&new Date(x.banned_until).getTime()>Date.now()));
 }
 function canEdit(){
-return approved&&!activeBan(ban)&&['projektleitung','administrator'].includes(role);
+return approved &&
+  !activeBan(ban) &&
+  ['projektleitung','administrator'].includes(role);
 }
 function hidePanels(){
 for(const id of ['authPanel','pendingPanel','banPanel','resetPanel','calendarApp'])
@@ -479,8 +481,7 @@ role=data?.role||null;
 alias=data?.alias?.trim()||'';
 approved=data?.approved===true;
 ban=data;
-owner=approved&&!activeBan(ban)&&role==='projektleitung'&&
-user?.email?.toLowerCase()===OWNER_EMAIL.toLowerCase();
+owner=approved&&!activeBan(ban)&&role==='projektleitung';
 }
 async function enterCalendar(){
 if(!user||entering||recovery)return;
