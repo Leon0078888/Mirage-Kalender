@@ -568,7 +568,7 @@ let supabaseClient=null;
 let realtimeChannel=null;
 let currentUser=null;
 let passwordRecoveryActive=false;
-let currentRole=null;
+let currentAlias=null;
 let currentApproved=false;
 let isOwner=false;
 let authMode='login';
@@ -653,7 +653,7 @@ function showApp(){
   $('resetPanel').style.display='none';
   $('calendarApp').style.display='block';
 
-  $('userStatus').textContent=currentUser?.email||'Zentral verbunden';
+  $('userStatus').textContent='👤 '+(currentAlias||'Alias noch nicht vergeben');
   $('adminBtn').style.display=isOwner?'inline-block':'none';
 
   const editDisplay=canEdit()?'inline-block':'none';
@@ -857,7 +857,7 @@ async function fetchPermissions(){
 
   const {data,error}=await supabaseClient
     .from('mirage_user_roles')
-    .select('role,approved,banned_permanently,banned_until')
+    .select('role,approved,alias,banned_permanently,banned_until')
     .eq('user_id',currentUser.id)
     .maybeSingle();
 
@@ -877,7 +877,7 @@ async function enterCalendar(){
 
     if(version!==sessionVersion || !currentUser)return;
 
-    currentRole=data?.role||null;
+    currentAlias=data?.alias?.trim()||null;
     currentApproved=data?.approved===true;
     currentBan=data;
 
@@ -937,7 +937,7 @@ async function checkPermissions(){
     const wasBanned=$('banPanel').style.display==='flex';
     const wasPending=$('pendingPanel').style.display==='grid';
 
-    currentRole=data?.role||null;
+    currentAlias=data?.alias?.trim()||null;
     currentApproved=approved;
     currentBan=data;
 
@@ -1655,7 +1655,22 @@ async function loadAdminUsers(){
         :'Wartet auf Freigabe';
     }
 
-    info.append(email,state);
+    const aliasField=document.createElement('div');
+aliasField.className='field';
+
+const aliasLabel=document.createElement('label');
+aliasLabel.textContent='Benutzeralias';
+
+const aliasInput=document.createElement('input');
+aliasInput.type='text';
+aliasInput.maxLength=40;
+aliasInput.minLength=2;
+aliasInput.placeholder='Alias vergeben';
+aliasInput.value=user.alias||'';
+
+aliasField.append(aliasLabel,aliasInput);
+
+info.append(email,aliasField,state);
 
     const select=document.createElement('select');
 
@@ -1688,6 +1703,44 @@ async function loadAdminUsers(){
     save.className='btn';
     save.textContent='Rolle speichern';
 
+    const aliasSave=document.createElement('button');
+aliasSave.className='btn primary';
+aliasSave.textContent='Alias speichern';
+
+aliasSave.onclick=async()=>{
+  const value=aliasInput.value.trim();
+
+  if(value.length<2 || value.length>40){
+    $('adminMessage').textContent=
+      'Der Alias muss zwischen 2 und 40 Zeichen haben.';
+    return;
+  }
+
+  aliasSave.disabled=true;
+
+  const {error}=await supabaseClient.rpc(
+    'mirage_admin_set_alias',{
+      p_user_id:user.user_id,
+      p_alias:value
+    }
+  );
+
+  if(error){
+    $('adminMessage').textContent=
+      'Fehler: '+error.message;
+    aliasSave.disabled=false;
+    return;
+  }
+
+  $('adminMessage').textContent='Alias gespeichert.';
+
+  if(user.user_id===currentUser.id){
+    currentAlias=value;
+    showApp();
+  }
+
+  await loadAdminUsers();
+};
     const banButton=document.createElement('button');
     banButton.className='btn ban';
     banButton.textContent='⛔ Sperren / Bannen';
@@ -1734,7 +1787,7 @@ async function loadAdminUsers(){
     banButton.onclick=()=>openBanModal(user);
     unbanButton.onclick=()=>unbanUser(user);
 
-    actions.append(approvalButton,save);
+    actions.append(aliasSave,approvalButton,save);
 
     if(banned){
       actions.append(unbanButton);
