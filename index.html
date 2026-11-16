@@ -151,7 +151,7 @@ const START_HOUR=7,END_HOUR=24;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-let offset=0,events=[],supabase=null,realtimeChannel=null,currentUser=null;
+let offset=0,events=[],supabaseClient=null,realtimeChannel=null,currentUser=null;
 
 function minutes(t){let [h,m]=String(t).slice(0,5).split(':').map(Number);return h*60+m}
 function monday(d){let x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
@@ -165,11 +165,11 @@ function showApp(){$('authPanel').style.display='none';$('calendarApp').style.di
 async function init(){
  if(!window.supabase){showAuth('Supabase konnte nicht geladen werden. Bitte Seite neu laden.');return}
  if(SUPABASE_URL.startsWith('DEINE_')||SUPABASE_ANON_KEY.startsWith('DEIN_')){showAuth('Bitte zuerst Supabase-URL und Publishable Key eintragen.');return}
- supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- const {data:{session},error}=await supabase.auth.getSession();
+supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ const {data:{session},error}=await supabaseClient.auth.getSession();
  if(error){showAuth('Anmeldung konnte nicht geprüft werden: '+error.message);return}
  if(session){currentUser=session.user;await enterCalendar()}else showAuth();
- supabase.auth.onAuthStateChange(async(_event,session)=>{
+ supabaseClient.auth.onAuthStateChange(async(_event,session)=>{
   if(session){currentUser=session.user;await enterCalendar()}
   else{currentUser=null;events=[];if(realtimeChannel)await supabase.removeChannel(realtimeChannel);showAuth()}
  });
@@ -179,22 +179,22 @@ async function enterCalendar(){showApp();await loadEvents();subscribeRealtime();
 
 async function login(email,password){
  $('authMessage').textContent='Anmeldung läuft …';
- const {error}=await supabase.auth.signInWithPassword({email,password});
+ const {error}=await supabaseClient.auth.signInWithPassword({email,password});
  if(error)$('authMessage').textContent='Anmeldung fehlgeschlagen: '+error.message;
 }
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();await login($('loginEmail').value.trim(),$('loginPassword').value)});
-$('logoutBtn').addEventListener('click',async()=>{if(confirm('Möchtest du dich wirklich abmelden?'))await supabase.auth.signOut()});
+$('logoutBtn').addEventListener('click',async()=>{if(confirm('Möchtest du dich wirklich abmelden?'))await supabaseClient.auth.signOut()});
 
 async function loadEvents(){
  if(!supabase||!currentUser)return;
- const {data,error}=await supabase.from('mirage_events').select('*').order('event_date').order('start_time');
+ const {data,error}=await supabaseClient.from('mirage_events').select('*').order('event_date').order('start_time');
  if(error){alert('Termine konnten nicht geladen werden: '+error.message);return}
  events=(data||[]).map(row=>({id:row.id,title:row.title,category:row.category,date:row.event_date,start:String(row.start_time).slice(0,5),end:String(row.end_time).slice(0,5),description:row.description||''}));
 }
 
 function subscribeRealtime(){
  if(realtimeChannel)supabase.removeChannel(realtimeChannel);
- realtimeChannel=supabase.channel('mirage-calendar-live')
+ realtimeChannel=	supabaseClient.channel('mirage-calendar-live')
  .on('postgres_changes',{event:'*',schema:'public',table:'mirage_events'},async()=>{await loadEvents();render()})
  .subscribe();
 }
@@ -252,7 +252,7 @@ $('form').addEventListener('submit',async ev=>{
  let id=$('eventId').value;
  let item={title:$('title').value.trim(),category:$('category').value,event_date:$('date').value,start_time:start,end_time:end,description:$('description').value.trim(),created_by:currentUser.id};
  if(!item.title||!item.event_date)return;
- let result=id?await supabase.from('mirage_events').update(item).eq('id',id):await supabase.from('mirage_events').insert(item);
+ let result=id?await supabaseClient.from('mirage_events').update(item).eq('id',id):await supabaseClient.from('mirage_events').insert(item);
  if(result.error){alert('Speichern fehlgeschlagen: '+result.error.message);return}
  closeForm();await loadEvents();render();
 });
@@ -260,7 +260,7 @@ $('form').addEventListener('submit',async ev=>{
 $('delete').addEventListener('click',async()=>{
  let id=$('eventId').value;
  if(id&&confirm('Diesen Termin wirklich löschen?')){
-  let {error}=await supabase.from('mirage_events').delete().eq('id',id);
+  let {error}=await supabaseClient.from('mirage_events').delete().eq('id',id);
   if(error){alert('Löschen fehlgeschlagen: '+error.message);return}
   closeForm();await loadEvents();render();
  }
