@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -4180,334 +4179,132 @@ card.append(
 
 <!-- ENDE MIRAGE SICHERHEITSCENTER V1 -->
 
-<!-- MIRAGE CONTROL CENTER NAVIGATION V1 -->
-
+<!-- MIRAGE CONTROL CENTER V2 - BEREINIGTE NAVIGATION -->
 <style>
-#mirageControlLayout {
-  display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
-  gap: 16px;
-  margin-top: 20px;
-}
-
-#mirageControlNav {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  background: #0b1727;
-  border: 1px solid #2c4564;
-  border-radius: 14px;
-  padding: 12px;
-  align-self: start;
-}
-
-.mirage-control-tab {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  color: #b8cce6;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  padding: 12px;
-  transition: background .15s;
-}
-
-.mirage-control-tab:hover {
-  background: #193451;
-}
-
-.mirage-control-tab.active {
-  background: #204c80;
-  border-color: #3485ec;
-  color: white;
-  font-weight: bold;
-}
-
-#mirageControlContent {
-  min-width: 0;
-}
-
-.mirage-control-page {
-  display: none;
-  min-width: 0;
-}
-
-.mirage-control-page.active {
-  display: block;
-}
-
-.mirage-control-heading {
-  margin-bottom: 16px;
-  padding: 15px;
-  background: #14253b;
-  border: 1px solid #2c4564;
-  border-radius: 12px;
-}
-
-.mirage-control-heading h2 {
-  margin: 0 0 5px;
-  color: #85b9ff;
-}
-
-.mirage-control-heading p {
-  margin: 0;
-}
-
-#mirageControlContent .mirage-system-card,
-#mirageControlContent .mirage-extra-card,
-#mirageControlContent #mirageSecurityCenter {
-  margin: 0 0 15px;
-}
-
-@media (max-width: 800px) {
-  #mirageControlLayout {
-    grid-template-columns: 1fr;
-  }
-
-  #mirageControlNav {
-    display: grid;
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .mirage-control-tab {
-    font-size: 12px;
-    padding: 10px;
-  }
-}
+#mirageControlLayout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;margin-top:20px}
+#mirageControlNav{display:flex;flex-direction:column;gap:7px;background:#0b1727;border:1px solid #2c4564;border-radius:14px;padding:12px;align-self:start}
+.mirage-control-tab{width:100%;text-align:left;background:transparent;color:#b8cce6;border:1px solid transparent;border-radius:9px;padding:12px}
+.mirage-control-tab:hover{background:#193451}
+.mirage-control-tab.active{background:#204c80;border-color:#3485ec;color:#fff;font-weight:bold}
+#mirageControlContent{min-width:0}
+#mirageControlContent .mirage-control-page{display:none!important;min-width:0}
+#mirageControlContent .mirage-control-page.active{display:block!important}
+.mirage-control-heading{margin-bottom:16px;padding:15px;background:#14253b;border:1px solid #2c4564;border-radius:12px}
+.mirage-control-heading h2{margin:0 0 5px;color:#85b9ff}
+.mirage-control-heading p{margin:0}
+#mirageControlContent .mirage-system-card,#mirageControlContent .mirage-extra-card,#mirageControlContent #mirageSecurityCenter{margin:0 0 15px}
+.mirage-dash-box{background:#14253b;border:1px solid #2c4564;border-radius:12px;padding:16px;margin-bottom:15px}
+.mirage-dash-box h3{margin:0 0 12px;color:#85b9ff;font-size:16px}
+.mirage-dash-row{padding:9px 0;border-bottom:1px solid #2c4564;overflow-wrap:anywhere}
+.mirage-dash-row:last-child{border-bottom:0}
+.mirage-dash-meta{font-size:11px;color:#91a6c2}
+#mirageControlContent .mirage-extra-card{width:100%}
+@media(max-width:800px){#mirageControlLayout{grid-template-columns:1fr}#mirageControlNav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.mirage-control-tab{font-size:12px;padding:10px}}
 </style>
-
 <script>
 (() => {
-  const panel = document.getElementById(
-    'systemPanel'
-  );
-
-  if (!panel) return;
-
-  if (document.getElementById(
-    'mirageControlLayout'
-  )) return;
-
-  const sections = [
-    {
-      id: 'overview',
-      label: '📊 Übersicht',
-      title: '📊 Systemübersicht',
-      description:
-        'Alle wichtigen Systemzahlen auf einen Blick.',
-      selector: '#mirageStatsReload'
-    },
-    {
-      id: 'security',
-      label: '🔐 Sicherheit',
-      title: '🔐 Sicherheitscenter',
-      description:
-        'Benutzerkonten, Sperren und Sicherheitsdaten.',
-      selector: '#mirageSecurityCenter'
-    },
-    {
-      id: 'maintenance',
-      label: '🛠️ Wartungsmodus',
-      title: '🛠️ Wartungsarbeiten',
-      description:
-        'Kalenderzugriff während Wartungen verwalten.',
-      selector: '#maintenanceToggle'
-    },
-    {
-      id: 'announcements',
-      label: '📢 Ankündigungen',
-      title: '📢 Systemankündigungen',
-      description:
-        'Mitteilungen für alle Benutzer verwalten.',
-      selector: '#mirageAnnouncementSave'
-    },
-    {
-      id: 'registration',
-      label: '👥 Registrierung',
-      title: '👥 Registrierungsverwaltung',
-      description:
-        'Neue Benutzerregistrierungen erlauben oder sperren.',
-      selector: '#mirageRegistrationToggle'
-    }
+  const panel=document.getElementById('systemPanel');
+  if(!panel||document.getElementById('mirageControlLayout'))return;
+  const layout=document.createElement('div');layout.id='mirageControlLayout';
+  const nav=document.createElement('nav');nav.id='mirageControlNav';nav.setAttribute('aria-label','Systemverwaltung');
+  const content=document.createElement('div');content.id='mirageControlContent';
+  layout.append(nav,content);
+  const sections=[
+    ['dashboard','🏠 Dashboard','🏠 Mirage Dashboard','Alle wichtigen Informationen auf einen Blick.'],
+    ['security','🔐 Sicherheit','🔐 Sicherheitscenter','Konten, Sperren und Sicherheitsinformationen.'],
+    ['maintenance','🛠️ Wartungsmodus','🛠️ Wartungsarbeiten','Zugriff während Wartungsarbeiten verwalten.'],
+    ['announcements','📢 Ankündigungen','📢 Systemankündigungen','Mitteilungen an alle Benutzer veröffentlichen.'],
+    ['registration','👥 Registrierung','👥 Registrierung','Neue Registrierungen erlauben oder sperren.']
   ];
-
-  const layout = document.createElement('div');
-  layout.id = 'mirageControlLayout';
-
-  const nav = document.createElement('nav');
-  nav.id = 'mirageControlNav';
-  nav.setAttribute(
-    'aria-label',
-    'Mirage Systemverwaltung'
-  );
-
-  const content = document.createElement('div');
-  content.id = 'mirageControlContent';
-
-  layout.append(nav, content);
-
-  const pages = new Map();
-  const buttons = new Map();
-
-  for (const section of sections) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'mirage-control-tab';
-    button.textContent = section.label;
-
-    const page = document.createElement('div');
-    page.className = 'mirage-control-page';
-    page.id = 'miragePage_' + section.id;
-
-    const heading = document.createElement('div');
-    heading.className = 'mirage-control-heading';
-
-    const title = document.createElement('h2');
-    title.textContent = section.title;
-
-    const description = document.createElement('p');
-    description.textContent = section.description;
-
-    heading.append(title, description);
-    page.append(heading);
-
-    button.addEventListener('click', () => {
-      for (const [id, element] of pages) {
-        element.classList.toggle(
-          'active',
-          id === section.id
-        );
-      }
-
-      for (const [id, element] of buttons) {
-        const active = id === section.id;
-
-        element.classList.toggle(
-          'active',
-          active
-        );
-
-        element.setAttribute(
-          'aria-current',
-          active ? 'page' : 'false'
-        );
-      }
-    });
-
-    nav.append(button);
-    content.append(page);
-
-    pages.set(section.id, page);
-    buttons.set(section.id, button);
+  const pages={},buttons={};
+  for(const [id,label,title,description] of sections){
+    const button=document.createElement('button');button.type='button';button.className='mirage-control-tab';button.textContent=label;
+    const page=document.createElement('div');page.id='miragePage_'+id;page.className='mirage-control-page';
+    const heading=document.createElement('div');heading.className='mirage-control-heading';
+    const h=document.createElement('h2');h.textContent=title;
+    const p=document.createElement('p');p.textContent=description;
+    heading.append(h,p);page.append(heading);nav.append(button);content.append(page);
+    pages[id]=page;buttons[id]=button;
+    button.addEventListener('click',()=>activate(id));
   }
-
-  // Bestehende Funktionskarten verschieben.
-  // Es werden keine Buttons oder IDs neu erstellt.
-
-  function findCard(selector) {
-    const element = panel.querySelector(selector);
-
-    if (!element) return null;
-
-    if (selector === '#mirageSecurityCenter') {
-      return element;
+  function activate(id){
+    for(const key of Object.keys(pages)){
+      pages[key].classList.toggle('active',key===id);
+      buttons[key].classList.toggle('active',key===id);
+      buttons[key].setAttribute('aria-current',key===id?'page':'false');
     }
-
-    return element.closest(
-      '.mirage-system-card, .mirage-extra-card'
-    );
+    if(id==='dashboard')refreshDashboard();
+    if(id==='security')document.getElementById('mirageSecurityRefresh')?.click();
   }
-
-  const moved = new Set();
-
-  for (const section of sections) {
-    const card = findCard(section.selector);
-
-    if (!card || moved.has(card)) continue;
-
-    pages.get(section.id).append(card);
-    moved.add(card);
+  // Originale Bedienelemente mit ihren bestehenden Event-Handlern erhalten.
+  const relocate=(id,selector)=>{
+    const el=panel.querySelector(selector);if(!el)return;
+    const card=selector==='#mirageSecurityCenter'?el:el.closest('.mirage-system-card,.mirage-extra-card');
+    if(card)pages[id].append(card);
+  };
+  relocate('dashboard','#mirageStatsReload');
+  relocate('security','#mirageSecurityCenter');
+  relocate('maintenance','#maintenanceToggle');
+  relocate('announcements','#mirageAnnouncementSave');
+  relocate('registration','#mirageRegistrationToggle');
+  // Die gemeinsame Statusmeldung aus dem ursprünglichen Konfigurationsbereich beibehalten.
+  const message=document.getElementById('mirageExtraMessage');
+  if(message)pages.announcements.append(message);
+  const box=(title,id)=>{
+    const el=document.createElement('section');el.className='mirage-dash-box';
+    const h=document.createElement('h3');h.textContent=title;
+    const body=document.createElement('div');body.id=id;body.textContent='Wird geladen ...';
+    el.append(h,body);pages.dashboard.append(el);return body;
+  };
+  const status=box('🖥️ Systemstatus','mirageDashStatus');
+  const upcoming=box('📅 Anstehende Termine','mirageDashUpcoming');
+  const activity=box('📜 Letzte Aktivitäten','mirageDashActivity');
+  let loading=false;
+  const row=(parent,main,meta='')=>{
+    const item=document.createElement('div');item.className='mirage-dash-row';
+    const top=document.createElement('div');top.textContent=main;item.append(top);
+    if(meta){const sub=document.createElement('div');sub.className='mirage-dash-meta';sub.textContent=meta;item.append(sub)}
+    parent.append(item);
+  };
+  async function refreshDashboard(){
+    if(!owner||!db||loading)return;
+    loading=true;
+    try{
+      // Bestehende Statistikfunktion, keine neue RPC nötig.
+      document.getElementById('mirageStatsReload')?.click();
+      status.replaceChildren();
+      row(status,'🟢 Kalender angemeldet','Systemübersicht für den Eigentümer');
+      row(status,'🛠️ Wartung: '+(document.getElementById('maintenanceStatus')?.textContent.trim()||'Nicht verfügbar'));
+      row(status,'👥 Registrierung: '+(document.getElementById('mirageRegistrationState')?.textContent.trim()||'Nicht verfügbar'));
+      row(status,'📢 Ankündigung: '+(document.getElementById('mirageAnnouncementState')?.textContent.trim()||'Nicht verfügbar'));
+      upcoming.replaceChildren();
+      const today=new Date();const date=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+      const list=(typeof events!=='undefined'?events:[]).filter(e=>e.date>=date).sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start)).slice(0,5);
+      if(!list.length)row(upcoming,'Keine anstehenden Termine gefunden.');
+      else for(const e of list)row(upcoming,e.title,(e.date||'')+' · '+(e.start||'')+'–'+(e.end||''));
+      activity.textContent='Aktivitäten werden geladen ...';
+      const {data,error}=await db.from('mirage_audit_logs').select('created_at,action').order('created_at',{ascending:false}).limit(5);
+      if(error)throw error;
+      activity.replaceChildren();
+      if(!data?.length)row(activity,'Noch keine Aktivitäten vorhanden.');
+      else for(const item of data){
+        const label=(typeof logLabels!=='undefined'&&logLabels[item.action])||item.action;
+        row(activity,label,new Date(item.created_at).toLocaleString('de-DE',{timeZone:'Europe/Berlin'}));
+      }
+    }catch(error){activity.textContent='Aktivitäten konnten nicht geladen werden: '+error.message}
+    finally{loading=false}
   }
-
-  // Auch künftige zusätzliche Bereiche können
-  // später als eigene Register ergänzt werden.
-
-  const firstCard = panel.querySelector(
-    '.mirage-system-card, .mirage-extra-card'
-  );
-
-  const oldLayout = firstCard
-    ? firstCard.parentElement
-    : null;
-
-  // Layout innerhalb der vorhandenen
-  // Systemverwaltung platzieren.
-  const heading = panel.querySelector('.modalhead');
-
-  if (heading) {
-    heading.insertAdjacentElement(
-      'afterend',
-      layout
-    );
-  } else {
-    panel.prepend(layout);
-  }
-
-  // Hinweistext des alten Panels bleibt erhalten.
-  // Leere Container werden nicht gelöscht,
-  // damit vorhandene Skripte weiterlaufen.
-
-  // Startansicht
-  buttons.get('overview').click();
-
-  // Falls ein Bereich noch nicht installiert ist,
-  // eine passende Information anzeigen.
-  for (const section of sections) {
-    const page = pages.get(section.id);
-
-    if (
-      page.children.length === 1
-    ) {
-      const notice = document.createElement('p');
-      notice.className = 'small';
-      notice.textContent =
-        'Dieser Bereich ist noch nicht eingerichtet.';
-      page.append(notice);
-    }
-  }
-
-  console.log(
-    'Mirage Control Center Navigation geladen.'
-  );
+  const head=panel.querySelector('.modalhead');
+  if(head)head.insertAdjacentElement('afterend',layout);else panel.prepend(layout);
+  const systemButton=document.getElementById('systemBtn');
+  systemButton?.addEventListener('click',()=>{if(owner)activate('dashboard')});
+  setInterval(()=>{
+    if(owner&&pages.dashboard.classList.contains('active')&&panel.style.display!=='none')refreshDashboard();
+  },30000);
+  activate('dashboard');
 })();
 </script>
-
-<!-- ENDE MIRAGE CONTROL CENTER NAVIGATION -->
-
-<!-- MIRAGE DASHBOARD NAVIGATION FIX -->
-<script>
-(() => {
-  const nav = document.getElementById(
-    'mirageControlNav'
-  );
-
-  if (!nav) return;
-
-  const overviewButton = [...nav.querySelectorAll(
-    '.mirage-control-tab'
-  )].find(button =>
-    button.textContent.includes('Übersicht')
-  );
-
-  if (overviewButton) {
-    overviewButton.textContent = '🏠 Dashboard';
-    nav.prepend(overviewButton);
-    overviewButton.click();
-  }
-})();
-</script>
-<!-- ENDE MIRAGE DASHBOARD NAVIGATION FIX -->
+<!-- ENDE MIRAGE CONTROL CENTER V2 -->
 
 </body>
 </html>
