@@ -4664,7 +4664,7 @@ card.append(
 
 
 
-<!-- MIRAGE TERMINERINNERUNGEN V1: Nur bei geoeffneter Webseite -->
+<!-- MIRAGE TERMINERINNERUNGEN V2: automatische Aktualisierung -->
 <style>
 #mirageReminderPanel{margin-top:18px}
 #mirageReminderList{display:grid;gap:10px}
@@ -4679,82 +4679,105 @@ card.append(
  const anchor=document.getElementById('mirageAttendanceOverview');
  if(!anchor||document.getElementById('mirageReminderPanel'))return;
  const panel=document.createElement('section');panel.className='panel';panel.id='mirageReminderPanel';
- panel.innerHTML='<h2>🔔 Terminerinnerungen</h2><p id="mirageReminderStatus">Erinnerungen werden bei geöffneter Webseite geprüft.</p><div id="mirageReminderList"></div><div class="mirage-reminder-actions"><button type="button" id="mirageReminderCheck">Jetzt prüfen</button><button type="button" id="mirageReminderClear">Angezeigte Erinnerungen ausblenden</button></div>';
+ panel.innerHTML='<h2>🔔 Terminerinnerungen</h2><p id="mirageReminderStatus">Automatische Aktualisierung alle 30 Sekunden.</p><div id="mirageReminderList"></div><div class="mirage-reminder-actions"><button type="button" id="mirageReminderClear">Erinnerungen ausblenden</button></div>';
  anchor.insertAdjacentElement('afterend',panel);
  const list=panel.querySelector('#mirageReminderList');
  const status=panel.querySelector('#mirageReminderStatus');
- let running=false,shownUser=null,collapsed=false;
+ const toggle=panel.querySelector('#mirageReminderClear');
+ let running=false,refreshing=false,shownUser=null,collapsed=false;
  const key=()=>user?'mirage-reminders-v1-'+user.id:null;
- function read(){try{return JSON.parse(localStorage.getItem(key())||'{}')}catch{return {}}}
- function write(obj){try{localStorage.setItem(key(),JSON.stringify(obj))}catch(e){console.warn('Erinnerungsstatus nicht speicherbar',e)}}
+ function read(){try{return JSON.parse(localStorage.getItem(key())||'{}')||{}}catch{return {}}}
+ function write(obj){try{localStorage.setItem(key(),JSON.stringify(obj))}catch(e){console.warn('Erinnerungen konnten nicht gespeichert werden',e)}}
  const startTime=e=>{
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(e.date||''));
   const t=/^(\d{1,2}):(\d{2})/.exec(String(e.start||''));
   if(!m||!t)return NaN;
   return new Date(+m[1],+m[2]-1,+m[3],+t[1],+t[2]).getTime();
  };
- function renderHistory(){
+ const visible=()=>!!(user&&approved&&!activeBan(ban)&&document.getElementById('calendarApp')?.style.display!=='none');
+ function prune(){
+  if(!user)return {};
+  const seen=read(),now=Date.now();let changed=false;
+  const byId=new Map((Array.isArray(events)?events:[]).map(e=>[String(e.id),e]));
+  for(const id of Object.keys(seen)){
+   const parts=id.split('|'),ev=byId.get(parts[0]);
+   if(!ev||ev.date!==parts[1]||ev.start!==parts[2]||!Number.isFinite(startTime(ev))||startTime(ev)<=now){delete seen[id];changed=true}
+  }
+  if(changed)write(seen);
+  return seen;
+ }
+ function render(){
+  if(!visible()){list.replaceChildren();return}
+  const seen=prune();
+  toggle.textContent=collapsed?'Erinnerungen wieder einblenden':'Erinnerungen ausblenden';
   list.replaceChildren();
-  const button=panel.querySelector('#mirageReminderClear');
-  button.textContent=collapsed?'Erinnerungen wieder einblenden':'Angezeigte Erinnerungen ausblenden';
-  if(collapsed){status.textContent='Erinnerungen ausgeblendet – mit dem Button wieder einblenden.';return}
-  const now=Date.now();
-  const currentEvents=Array.isArray(events)?events:[];
-  const entries=Object.entries(read()).map(([id,stored])=>{
-   const parts=id.split('|');
-   const ev=currentEvents.find(e=>String(e.id)===parts[0]&&e.date===parts[1]&&e.start===parts[2]);
-   if(!ev||!(startTime(ev)>now))return null;
-   const data=stored&&typeof stored==='object'?stored:{};
-   return {at:typeof stored==='string'?stored:data.at||'',title:ev.title,date:ev.date,start:ev.start,description:ev.description||'',stage:parts[3]};
-  }).filter(e=>e&&(e.stage==='24h'||e.stage==='30m')).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,20);
-  for(const e of entries){
+  if(collapsed){status.textContent='Erinnerungen ausgeblendet · automatische Prüfung aktiv.';return}
+  const byId=new Map((Array.isArray(events)?events:[]).map(e=>[String(e.id),e]));
+  const entries=Object.entries(seen).map(([id,data])=>{
+   const parts=id.split('|'),ev=byId.get(parts[0]);
+   return {ev,stage:parts[3],at:typeof data==='string'?data:data?.at||''};
+  }).filter(x=>x.ev&&(x.stage==='24h'||x.stage==='30m')&&startTime(x.ev)>Date.now())
+   .sort((a,b)=>startTime(a.ev)-startTime(b.ev)).slice(0,20);
+  for(const {ev,stage} of entries){
    const item=document.createElement('div');item.className='mirage-reminder-item';
-   const head=document.createElement('strong');head.textContent=(e.stage==='24h'?'📅 Erinnerung (24 Stunden)':'⏰ Bald geht es los (30 Minuten)')+' · '+e.title;
-   const info=document.createElement('small');info.textContent=e.date+' · '+e.start+' Uhr'+(e.description?' · '+e.description:'');
+   const head=document.createElement('strong');
+   head.textContent=(stage==='24h'?'📅 Erinnerung (24 Stunden)':'⏰ Bald geht es los (30 Minuten)')+' · '+ev.title;
+   const info=document.createElement('small');
+   info.textContent=ev.date+' · '+ev.start+' Uhr'+(ev.description?' · '+ev.description:'');
    item.append(head,info);list.append(item);
   }
-  status.textContent=entries.length?entries.length+' Erinnerung(en) zu kommenden Terminen.':'Keine aktuellen Erinnerungen zu kommenden Terminen.';
+  status.textContent=entries.length?entries.length+' aktuelle Erinnerung(en) · automatische Aktualisierung alle 30 Sekunden.':'Keine aktuellen Erinnerungen · automatische Aktualisierung alle 30 Sekunden.';
  }
  async function check(){
-  if(running||document.visibilityState==='hidden')return;
-  if(!user||!approved||activeBan(ban)||document.getElementById('calendarApp')?.style.display==='none')return;
-  running=true;
+  if(running||document.visibilityState==='hidden'||!visible())return;
+  running=true;const currentUser=user.id;
   try{
-   if(shownUser!==user.id){shownUser=user.id;collapsed=false;renderHistory()}
+   if(shownUser!==currentUser){shownUser=currentUser;collapsed=false}
    const now=Date.now();
-   const upcoming=(Array.isArray(events)?events:[]).filter(e=>e.id&&startTime(e)>now&&startTime(e)-now<=24*60*60*1000);
-   if(!upcoming.length){if(!collapsed)renderHistory();return}
-   const ids=upcoming.map(e=>String(e.id));
-   const {data,error}=await db.from('mirage_event_rsvps').select('event_id,response').eq('user_id',user.id).in('event_id',ids);
-   if(error)throw error;
-   const participating=new Set((data||[]).filter(r=>r.response==='yes'||r.response==='maybe').map(r=>String(r.event_id)));
-   const seen=read();let added=0;
-   for(const e of upcoming){
-    if(!participating.has(String(e.id)))continue;
-    const minutes=(startTime(e)-now)/60000;
-    const stage=minutes<=30?'30m':'24h';
-    // Wenn beide Fristen waehrend eines Offline-Zeitraums verstrichen sind,
-    // nur die zeitlich naechste Erinnerung zeigen.
-    const id=String(e.id)+'|'+e.date+'|'+e.start+'|'+stage;
-    if(seen[id])continue;
-    seen[id]={at:new Date().toISOString(),title:e.title,date:e.date,start:e.start,description:e.description||''};added++;
+   const upcoming=(Array.isArray(events)?events:[]).filter(e=>e.id&&startTime(e)>now&&startTime(e)-now<=86400000);
+   const seen=prune();
+   if(upcoming.length){
+    const ids=upcoming.map(e=>String(e.id));
+    const {data,error}=await db.from('mirage_event_rsvps').select('event_id,response').eq('user_id',currentUser).in('event_id',ids);
+    if(error)throw error;
+    if(!user||user.id!==currentUser||!visible())return;
+    const participating=new Set((data||[]).filter(r=>r.response==='yes'||r.response==='maybe').map(r=>String(r.event_id)));
+    // Bei geänderter Teilnahme alte Erinnerungen nicht mehr anzeigen.
+    for(const id of Object.keys(seen))if(!participating.has(id.split('|')[0]))delete seen[id];
+    for(const ev of upcoming){
+     if(!participating.has(String(ev.id)))continue;
+     const stage=startTime(ev)-now<=1800000?'30m':'24h';
+     const id=String(ev.id)+'|'+ev.date+'|'+ev.start+'|'+stage;
+     if(!seen[id])seen[id]={at:new Date().toISOString()};
+    }
    }
-   // Aeltere Erinnerungsmarkierungen nach 60 Tagen entfernen.
-   for(const [id,value] of Object.entries(seen)){const at=typeof value==='string'?value:value?.at;if(at&&Date.now()-new Date(at).getTime()>60*86400000)delete seen[id]}
-   write(seen);
-   if(!collapsed)renderHistory();
-  }catch(e){status.textContent='Erinnerungen konnten nicht geladen werden: '+(e.message||e)}
+   write(seen);render();
+  }catch(e){status.textContent='Aktualisierung fehlgeschlagen: '+(e.message||e)}
   finally{running=false}
  }
- panel.querySelector('#mirageReminderCheck').addEventListener('click',check);
- panel.querySelector('#mirageReminderClear').addEventListener('click',()=>{collapsed=!collapsed;renderHistory()});
- document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
- setInterval(check,60000);
- setTimeout(()=>{renderHistory();check()},1500);
+ async function refresh(){
+  if(refreshing||document.visibilityState==='hidden'||!visible())return;
+  refreshing=true;const currentUser=user.id;
+  try{
+   // Termine regelmäßig direkt aus Supabase neu laden, auch ohne Realtime-Ereignis.
+   const before=JSON.stringify(events);
+   await loadEvents();
+   if(!user||user.id!==currentUser||!visible())return;
+   if(JSON.stringify(events)!==before){renderCalendar()}
+   await check();
+  }catch(e){console.warn('Mirage Erinnerungen: Aktualisierung fehlgeschlagen',e);await check()}
+  finally{refreshing=false}
+ }
+ toggle.addEventListener('click',()=>{collapsed=!collapsed;render()});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh()});
+ window.addEventListener('focus',refresh);
+ setInterval(refresh,30000);
+ setTimeout(refresh,1500);
  window.mirageCheckReminders=check;
+ window.mirageRefreshReminders=refresh;
 })();
 </script>
-<!-- ENDE MIRAGE TERMINERINNERUNGEN V1 -->
+<!-- ENDE MIRAGE TERMINERINNERUNGEN V2 -->
 
 </body>
 </html>
