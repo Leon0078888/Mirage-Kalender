@@ -4487,10 +4487,16 @@ card.append(
 
 <!-- MIRAGE DASHBOARD V1 -->
 <style>
+
 #mirageDashboard {
-  display: grid;
+  display: none;
   gap: 16px;
 }
+
+#mirageDashboard.active {
+  display: grid;
+}
+
 .mirage-dash-card {
   background: #14253b;
   border: 1px solid #2c4564;
