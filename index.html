@@ -344,6 +344,7 @@ p{color:var(--muted)}
 <div id="eventCreatorInfo" class="event-info" style="display:none"></div>
 <div class="actions">
 <button type="button" id="eventDelete" class="danger">Löschen</button>
+<button type="button" id="eventProtocol" class="primary" style="display:none">📋 Protokoll erstellen</button>
 <button type="button" id="eventCancel">Abbrechen</button>
 <button type="submit" class="primary">Speichern</button>
 </div>
@@ -1219,6 +1220,8 @@ function openEvent(ev={}){
 
   $('eventDelete').style.display=
     ev.id?'inline-block':'none';
+  $('eventProtocol').style.display=ev.id&&canEdit()?'inline-block':'none';
+  $('eventProtocol').textContent='📋 Protokoll erstellen / bearbeiten';
 
   const info=$('eventCreatorInfo');
   info.replaceChildren();
@@ -1248,6 +1251,12 @@ function closeEvent(){
 
 $('eventClose').onclick=closeEvent;
 $('eventCancel').onclick=closeEvent;
+$('eventProtocol').onclick=()=>{
+  const ev=events.find(x=>String(x.id)===String($('eventId').value));
+  if(!ev||!canEdit())return;
+  closeEvent();
+  if(typeof window.mirageOpenProtocolForEvent==='function')window.mirageOpenProtocolForEvent(ev);
+};
 
 $('eventBackdrop').onclick=e=>{
   if(e.target===$('eventBackdrop'))closeEvent();
@@ -4892,7 +4901,7 @@ card.append(
   row.querySelector('.pi-title').value=i.title||'';row.querySelector('.pi-assignee').value=i.assignee||'';
   row.querySelector('.pi-remove').onclick=()=>row.remove();el('mirageProtocolEditItems').append(row);
  }
- function open(p=null){
+ function open(p=null,preferredEventId=null){
   if(!editor())return;
   el('mirageProtocolForm').reset();el('mirageProtocolFormError').textContent='';
   el('mirageProtocolId').value=p?.id||'';
@@ -4902,7 +4911,7 @@ card.append(
   const used=new Set(protocols.filter(x=>x.id!==p?.id&&x.event_id).map(x=>String(x.event_id)));
   for(const ev of events){if(used.has(String(ev.id)))continue;const opt=document.createElement('option');opt.value=String(ev.id);opt.textContent=ev.title+' · '+ev.date+' · '+ev.start;select.append(opt)}
   if(p?.event_id&&!eventById(p.event_id)){const opt=document.createElement('option');opt.value=p.event_id;opt.textContent=eventLabel(p);select.append(opt)}
-  select.value=p?.event_id||select.options[0]?.value||'';
+  select.value=p?.event_id||preferredEventId||select.options[0]?.value||'';
   if(!select.value){alert('Es gibt keinen freien Kalendertermin. Bitte zuerst einen Termin erstellen.');return}
   el('mirageProtocolEditItems').replaceChildren();
   for(const i of items.filter(i=>i.protocol_id===p?.id))addItem(i);
@@ -4937,7 +4946,7 @@ card.append(
  };
  setInterval(()=>{if(active==='protocols'&&allowed()&&document.visibilityState==='visible')load()},30000);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&active==='protocols')load()});
- window.mirageOpenProtocolForEvent=ev=>{setTab('protocols');load().then(()=>{if(editor())open(protocols.find(p=>String(p.event_id)===String(ev.id))||null)})};
+ window.mirageOpenProtocolForEvent=ev=>{setTab('protocols');load().then(()=>{if(editor())open(protocols.find(p=>String(p.event_id)===String(ev.id))||null,ev.id)})};
 })();
 </script>
 
