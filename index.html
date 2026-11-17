@@ -4408,5 +4408,85 @@ card.append(
 </script>
 <!-- ENDE MIRAGE TERMINVERLAUF V1 -->
 
+
+<!-- MIRAGE BENACHRICHTIGUNGSCENTER V1 -->
+<style>
+#mirageNotifyTools{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}
+#mirageNotifyList{display:grid;gap:10px}
+.mirage-notify-item{padding:13px;background:#14253b;border:1px solid #2c4564;border-radius:12px}
+.mirage-notify-item.unread{border-left:4px solid #4b9dff;background:#182e49}
+.mirage-notify-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mirage-notify-meta{font-size:12px;color:#a8bcd3;margin-top:5px;overflow-wrap:anywhere}
+.mirage-notify-badge{display:inline-block;margin-left:7px;background:#2768aa;border-radius:99px;padding:1px 7px;font-size:12px;color:#fff}
+</style>
+<script>
+(() => {
+  const nav=document.getElementById('mirageControlNav');
+  const content=document.getElementById('mirageControlContent');
+  if(!nav||!content||document.getElementById('miragePage_notifications'))return;
+  const button=document.createElement('button');
+  button.type='button';button.className='mirage-control-tab';button.textContent='🔔 Benachrichtigungen';
+  const page=document.createElement('div');page.id='miragePage_notifications';page.className='mirage-control-page';
+  page.innerHTML='<div class="mirage-control-heading"><h2>🔔 Benachrichtigungscenter <span id="mirageNotifyCount" class="mirage-notify-badge" hidden></span></h2><p>Neue Termine, Änderungen und wichtige protokollierte Aktionen.</p></div><div id="mirageNotifyTools"><button type="button" id="mirageNotifyRefresh">🔄 Aktualisieren</button><button type="button" id="mirageNotifyReadAll">✓ Alle als gelesen markieren</button></div><p class="small" id="mirageNotifyStatus">Noch nicht geladen.</p><div id="mirageNotifyList"></div><p class="small">Ungelesen-Status wird nur in diesem Browser gespeichert. Benachrichtigungen erscheinen, solange die Webseite geöffnet ist; keine Push-Nachrichten.</p>';
+  nav.append(button);content.append(page);
+  const list=page.querySelector('#mirageNotifyList');
+  const status=page.querySelector('#mirageNotifyStatus');
+  const badge=page.querySelector('#mirageNotifyCount');
+  const refresh=page.querySelector('#mirageNotifyRefresh');
+  const readAll=page.querySelector('#mirageNotifyReadAll');
+  let items=[],busy=false;
+  const allowed=['event.created','event.updated','event.deleted','user.approved','user.banned','user.unbanned','user.role_changed','system.maintenance_enabled','system.maintenance_disabled','system.registration_enabled','system.registration_disabled','announcement.created'];
+  const names={'event.created':'📅 Neuer Termin','event.updated':'✏️ Termin geändert','event.deleted':'🗑️ Termin gelöscht','user.approved':'👤 Benutzer freigegeben','user.banned':'🔒 Benutzer gesperrt','user.unbanned':'🔓 Sperre aufgehoben','user.role_changed':'🛡️ Rolle geändert','system.maintenance_enabled':'🛠️ Wartung aktiviert','system.maintenance_disabled':'🟢 Wartung beendet','system.registration_enabled':'👥 Registrierung geöffnet','system.registration_disabled':'🚫 Registrierung geschlossen','announcement.created':'📢 Neue Ankündigung'};
+  function storageKey(){return 'mirage-notifications-read-v1-'+String(user?.id||'owner')}
+  function readSet(){try{const v=JSON.parse(localStorage.getItem(storageKey())||'[]');return new Set(Array.isArray(v)?v.map(String):[])}catch{return new Set()}}
+  function saveSet(set){try{localStorage.setItem(storageKey(),JSON.stringify([...set].slice(-2000)))}catch{}}
+  function titleOf(item){const d=item.new_data||item.old_data||{};return typeof d.title==='string'?d.title:(typeof d.name==='string'?d.name:'')}
+  function render(){
+    const seen=readSet();list.replaceChildren();
+    const unread=items.filter(x=>!seen.has(String(x.id))).length;
+    badge.hidden=!unread;badge.textContent=String(unread);
+    button.textContent='🔔 Benachrichtigungen'+(unread?' ('+unread+')':'');
+    status.textContent=items.length+' letzte Meldungen · '+unread+' ungelesen';
+    if(!items.length){const p=document.createElement('p');p.textContent='Noch keine protokollierten Benachrichtigungen vorhanden.';list.append(p)}
+    for(const item of items){
+      const card=document.createElement('div');card.className='mirage-notify-item'+(seen.has(String(item.id))?'':' unread');
+      const head=document.createElement('div');head.className='mirage-notify-head';
+      const heading=document.createElement('strong');heading.textContent=names[item.action]||((typeof logLabels!=='undefined'&&logLabels[item.action])||item.action);
+      const time=document.createElement('span');time.className='small';time.textContent=new Date(item.created_at).toLocaleString('de-DE',{timeZone:'Europe/Berlin'});
+      head.append(heading,time);card.append(head);
+      const detail=document.createElement('div');detail.className='mirage-notify-meta';
+      const actor=typeof creatorName==='function'?creatorName(item.actor_id):String(item.actor_id||'System');
+      detail.textContent=(titleOf(item)?titleOf(item)+' · ':'')+'Ausgeführt von: '+actor;card.append(detail);
+      if(!seen.has(String(item.id))){const mark=document.createElement('button');mark.type='button';mark.textContent='Als gelesen markieren';mark.style.marginTop='9px';mark.addEventListener('click',()=>{const s=readSet();s.add(String(item.id));saveSet(s);render()});card.append(mark)}
+      list.append(card);
+    }
+  }
+  async function load(){
+    if(busy||!owner||!db)return;
+    busy=true;refresh.disabled=true;
+    try{
+      const {data,error}=await db.from('mirage_audit_logs')
+        .select('id,created_at,actor_id,action,old_data,new_data')
+        .order('created_at',{ascending:false}).limit(100);
+      if(error)throw error;
+      items=(data||[]).filter(x=>allowed.includes(x.action)||String(x.action).startsWith('event.'));
+      render();
+    }catch(e){status.textContent='Benachrichtigungen konnten nicht geladen werden: '+e.message}
+    finally{busy=false;refresh.disabled=false}
+  }
+  button.addEventListener('click',()=>{
+    if(!owner)return;
+    nav.querySelectorAll('.mirage-control-tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-current','false')});
+    content.querySelectorAll('.mirage-control-page').forEach(x=>x.classList.remove('active'));
+    button.classList.add('active');button.setAttribute('aria-current','page');page.classList.add('active');load();
+  });
+  nav.addEventListener('click',e=>{const target=e.target.closest('.mirage-control-tab');if(target&&target!==button){button.classList.remove('active');page.classList.remove('active')}});
+  refresh.addEventListener('click',load);
+  readAll.addEventListener('click',()=>{const s=readSet();items.forEach(x=>s.add(String(x.id)));saveSet(s);render()});
+  setInterval(()=>{if(owner&&document.getElementById('systemPanel')?.style.display!=='none')load()},30000);
+})();
+</script>
+<!-- ENDE MIRAGE BENACHRICHTIGUNGSCENTER V1 -->
+
 </body>
 </html>
