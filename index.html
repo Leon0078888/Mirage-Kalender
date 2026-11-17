@@ -2326,5 +2326,496 @@ init();
 })();
 </script>
 
+<style>
+/* MIRAGE SYSTEMVERWALTUNG */
+
+#systemBtn {
+  display: none;
+}
+
+#systemPanel {
+  display: none;
+}
+
+.mirage-system-card {
+  background: #14253b;
+  border: 1px solid #365477;
+  border-radius: 13px;
+  padding: 20px;
+  margin-top: 15px;
+}
+
+.mirage-system-status {
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 30px;
+  background: #123c31;
+  color: #4ade80;
+  border: 1px solid #16834a;
+  font-weight: bold;
+}
+
+.mirage-maintenance-button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  font-weight: bold;
+  background: #facc15;
+  color: #101827;
+  border: 1px solid #fbbf24;
+}
+
+#maintenancePanel {
+  display: none;
+  min-height: 100vh;
+  padding: 25px;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(
+      ellipse at top,
+      #193b68,
+      #080e18 65%
+    );
+}
+
+.mirage-maintenance-box {
+  width: min(650px, 100%);
+  background: #101b2b;
+  border: 1px solid #365477;
+  border-radius: 17px;
+  padding: 35px;
+  text-align: center;
+  box-shadow: 0 15px 60px #0006;
+}
+
+.mirage-maintenance-box h1 {
+  color: #facc15;
+  letter-spacing: 2px;
+}
+
+.mirage-maintenance-box p {
+  color: #d1dbea;
+  line-height: 1.8;
+}
+
+.mirage-maintenance-contact {
+  color: #facc15;
+  border-top: 1px solid #365477;
+  margin-top: 25px;
+  padding-top: 20px;
+  font-weight: bold;
+}
+</style>
+
+<script>
+/* SYSTEMVERWALTUNG UND WARTUNGSMODUS */
+
+(() => {
+  let maintenanceActive = false;
+  let maintenanceChecking = false;
+
+  const systemBtn = document.createElement('button');
+  systemBtn.id = 'systemBtn';
+  systemBtn.className = 'primary';
+  systemBtn.textContent = '⚙️ Systemverwaltung';
+
+  document.getElementById('adminBtn')
+    .insertAdjacentElement('afterend', systemBtn);
+
+  const systemPanel = document.createElement('section');
+  systemPanel.id = 'systemPanel';
+  systemPanel.className = 'panel';
+
+  systemPanel.innerHTML = `
+    <div class="modalhead">
+      <h2>⚙️ Systemverwaltung</h2>
+      <button id="systemClose">Schließen</button>
+    </div>
+
+    <p>
+      Zentrale Einstellungen für den Mirage Kalender.
+      Nur für den Eigentümer.
+    </p>
+
+    <div class="mirage-system-card">
+      <div class="flex">
+        <h2>🛠️ Wartungsarbeiten</h2>
+        <span
+          id="maintenanceStatus"
+          class="mirage-system-status"
+        >
+          Wird geprüft ...
+        </span>
+      </div>
+
+      <p>
+        Sperrt den Mirage Kalender für alle
+        Benutzer außer der Projektleitung
+        Leon Waechter.
+      </p>
+
+      <div class="event-info">
+        ℹ️ Bei aktivierten Wartungsarbeiten
+        sehen andere Benutzer eine
+        Hinweismeldung und erhalten keinen
+        Zugriff auf die Kalenderansicht.
+      </div>
+
+      <button
+        id="maintenanceToggle"
+        class="mirage-maintenance-button"
+      >
+        🛠️ Wartungsarbeiten aktivieren
+      </button>
+
+      <p
+        id="maintenanceMessage"
+        class="small"
+      ></p>
+    </div>
+  `;
+
+  document.getElementById('adminPanel')
+    .insertAdjacentElement('afterend', systemPanel);
+
+  const maintenancePanel = document.createElement('div');
+  maintenancePanel.id = 'maintenancePanel';
+
+  maintenancePanel.innerHTML = `
+    <div class="mirage-maintenance-box">
+
+      <div class="brand"
+           style="justify-content:center;
+                  margin-bottom:30px">
+        <div class="logo">M</div>
+        <div>
+          <b>MIRAGE</b>
+          <small>KALENDER</small>
+        </div>
+      </div>
+
+      <div style="font-size:55px">🛠️</div>
+
+      <h1>WARTUNGSARBEITEN</h1>
+
+      <p>
+        Der Mirage Kalender ist aufgrund
+        von Wartungsarbeiten vorübergehend
+        nicht erreichbar.
+      </p>
+
+      <p>
+        Wir bitten um Verständnis und
+        informieren euch, sobald der
+        Kalender wieder verfügbar ist.
+      </p>
+
+      <div class="mirage-maintenance-contact">
+        ℹ️ Bei Fragen wendet euch bitte
+        an die Projektleitung
+        (Leon Waechter).
+      </div>
+
+      <div class="actions"
+           style="justify-content:center;
+                  margin-top:25px">
+
+        <button id="maintenanceOwnerLogin">
+          👑 Eigentümer-Anmeldung
+        </button>
+
+        <button id="maintenanceLogout">
+          Abmelden
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.append(maintenancePanel);
+
+  const originalHidePanels = hidePanels;
+  const originalShowCalendar = showCalendar;
+  const originalEnterCalendar = enterCalendar;
+  const originalCheckPermissions = checkPermissions;
+  const originalLoadEvents = loadEvents;
+  const originalLoadCreators = loadCreators;
+  const originalLoadRoster = loadRoster;
+  const originalRenderCalendar = renderCalendar;
+
+  function maintenanceOwner() {
+    return isOwner() && owner === true;
+  }
+
+  function maintenanceBlocked() {
+    return maintenanceActive && !isOwner();
+  }
+
+  function showMaintenance() {
+    originalHidePanels();
+
+    systemPanel.style.display = 'none';
+    maintenancePanel.style.display = 'flex';
+
+    document.getElementById(
+      'maintenanceOwnerLogin'
+    ).style.display = user ? 'none' : 'inline-block';
+
+    document.getElementById(
+      'maintenanceLogout'
+    ).style.display = user ? 'inline-block' : 'none';
+  }
+
+  function updateMaintenanceDisplay() {
+    systemBtn.style.display =
+      maintenanceOwner() &&
+      !maintenanceBlocked() &&
+      document.getElementById('calendarApp')
+        .style.display !== 'none'
+        ? 'inline-block'
+        : 'none';
+
+    const status = document.getElementById(
+      'maintenanceStatus'
+    );
+
+    const button = document.getElementById(
+      'maintenanceToggle'
+    );
+
+    status.textContent = maintenanceActive
+      ? '● Aktiviert'
+      : '● Deaktiviert';
+
+    status.style.color = maintenanceActive
+      ? '#facc15'
+      : '#4ade80';
+
+    button.textContent = maintenanceActive
+      ? '✓ Wartungsarbeiten beenden'
+      : '🛠️ Wartungsarbeiten aktivieren';
+
+    button.style.background = maintenanceActive
+      ? '#16834a'
+      : '#facc15';
+
+    button.style.color = maintenanceActive
+      ? '#ffffff'
+      : '#101827';
+  }
+
+  async function refreshMaintenance() {
+    if (!db || maintenanceChecking) return;
+
+    maintenanceChecking = true;
+
+    try {
+      const { data, error } = await db.rpc(
+        'mirage_get_maintenance'
+      );
+
+      if (error) throw error;
+
+      maintenanceActive = data === true;
+
+      if (maintenanceBlocked()) {
+        events = [];
+        creators = {};
+
+        await stopChannels();
+        showMaintenance();
+
+      } else if (
+        maintenancePanel.style.display === 'flex'
+      ) {
+        maintenancePanel.style.display = 'none';
+
+        if (user) {
+          await originalEnterCalendar();
+        } else {
+          showAuth();
+        }
+      }
+
+      updateMaintenanceDisplay();
+
+    } catch (error) {
+      console.error(
+        'Wartungsstatus konnte nicht geladen werden:',
+        error
+      );
+
+      if (!maintenanceOwner()) {
+        maintenanceActive = true;
+        showMaintenance();
+      }
+
+    } finally {
+      maintenanceChecking = false;
+    }
+  }
+
+  hidePanels = function() {
+    originalHidePanels();
+
+    systemPanel.style.display = 'none';
+    maintenancePanel.style.display = 'none';
+  };
+
+  showCalendar = function() {
+    if (maintenanceBlocked()) {
+      showMaintenance();
+      return;
+    }
+
+    originalShowCalendar();
+    maintenancePanel.style.display = 'none';
+    updateMaintenanceDisplay();
+  };
+
+  enterCalendar = async function() {
+    await refreshMaintenance();
+
+    if (maintenanceBlocked()) return;
+
+    return originalEnterCalendar();
+  };
+
+  checkPermissions = async function() {
+    await refreshMaintenance();
+
+    if (maintenanceBlocked()) return;
+
+    return originalCheckPermissions();
+  };
+
+  loadEvents = async function() {
+    if (maintenanceBlocked()) return;
+    return originalLoadEvents();
+  };
+
+  loadCreators = async function() {
+    if (maintenanceBlocked()) return;
+    return originalLoadCreators();
+  };
+
+  loadRoster = async function() {
+    if (maintenanceBlocked()) return;
+    return originalLoadRoster();
+  };
+
+  renderCalendar = function() {
+    if (maintenanceBlocked()) return;
+    return originalRenderCalendar();
+  };
+
+  systemBtn.onclick = () => {
+    if (!maintenanceOwner()) return;
+
+    document.getElementById(
+      'adminPanel'
+    ).style.display = 'none';
+
+    document.getElementById(
+      'logsPanel'
+    ).style.display = 'none';
+
+    systemPanel.style.display = 'block';
+
+    updateMaintenanceDisplay();
+
+    systemPanel.scrollIntoView({
+      behavior: 'smooth'
+    });
+  };
+
+  document.getElementById(
+    'systemClose'
+  ).onclick = () => {
+    systemPanel.style.display = 'none';
+  };
+
+  document.getElementById(
+    'maintenanceToggle'
+  ).onclick = async () => {
+    if (!maintenanceOwner()) return;
+
+    const next = !maintenanceActive;
+
+    const question = next
+      ? 'Wartungsarbeiten jetzt aktivieren?'
+      : 'Wartungsarbeiten beenden und Kalender freigeben?';
+
+    if (!confirm(question)) return;
+
+    const button = document.getElementById(
+      'maintenanceToggle'
+    );
+
+    const message = document.getElementById(
+      'maintenanceMessage'
+    );
+
+    button.disabled = true;
+    message.textContent = 'Speichere ...';
+
+    try {
+      const { data, error } = await db.rpc(
+        'mirage_set_maintenance',
+        { p_enabled: next }
+      );
+
+      if (error) throw error;
+
+      maintenanceActive = data === true;
+
+      message.textContent = maintenanceActive
+        ? 'Wartungsmodus aktiviert.'
+        : 'Kalender wieder freigegeben.';
+
+      updateMaintenanceDisplay();
+
+    } catch (error) {
+      message.textContent =
+        'Fehler: ' + error.message;
+
+    } finally {
+      button.disabled = false;
+    }
+  };
+
+  document.getElementById(
+    'maintenanceLogout'
+  ).onclick = logout;
+
+  document.getElementById(
+    'maintenanceOwnerLogin'
+  ).onclick = () => {
+    maintenancePanel.style.display = 'none';
+    showAuth();
+  };
+
+  setInterval(refreshMaintenance, 5000);
+
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (!document.hidden) {
+        refreshMaintenance();
+      }
+    }
+  );
+
+  const waitForClient = setInterval(() => {
+    if (!db) return;
+
+    clearInterval(waitForClient);
+    refreshMaintenance();
+  }, 100);
+})();
+</script>
+
 </body>
 </html>
