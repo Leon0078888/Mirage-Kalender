@@ -3912,5 +3912,273 @@ card.append(
 
 <!-- ENDE AUTOMATISCHE TERMINANKÜNDIGUNGEN -->
 
+<!-- MIRAGE SICHERHEITSCENTER V1 -->
+
+<style>
+#mirageSecurityCenter {
+  margin-top: 18px;
+  padding: 18px;
+  background: #101b2b;
+  border: 1px solid #365477;
+  border-radius: 14px;
+}
+
+.mirage-security-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.mirage-security-stat {
+  padding: 15px;
+  background: #14253b;
+  border: 1px solid #2c4564;
+  border-radius: 12px;
+}
+
+.mirage-security-stat strong {
+  display: block;
+  color: #85b9ff;
+  font-size: 25px;
+  margin-bottom: 5px;
+}
+
+.mirage-security-stat span {
+  color: #aebfd5;
+  font-size: 12px;
+}
+
+#mirageSecurityMessage {
+  color: #91a6c2;
+  font-size: 12px;
+  margin-top: 12px;
+}
+</style>
+
+<script>
+(() => {
+  const systemPanel = document.getElementById(
+    'systemPanel'
+  );
+
+  if (!systemPanel) {
+    console.error(
+      'Mirage Systemverwaltung nicht gefunden.'
+    );
+    return;
+  }
+
+  if (document.getElementById(
+    'mirageSecurityCenter'
+  )) return;
+
+  const section = document.createElement('section');
+
+  section.id = 'mirageSecurityCenter';
+
+  section.innerHTML = `
+    <div class="flex">
+      <h2>🔐 Sicherheitscenter</h2>
+      <button
+        type="button"
+        id="mirageSecurityRefresh"
+        class="primary"
+      >
+        🔄 Aktualisieren
+      </button>
+    </div>
+
+    <p>
+      Sicherheitsübersicht des Mirage Kalenders.
+      Nur für den Systemeigentümer.
+    </p>
+
+    <div class="mirage-security-grid">
+
+      <div class="mirage-security-stat">
+        <strong id="secTotal">—</strong>
+        <span>Registrierte Benutzer</span>
+      </div>
+
+      <div class="mirage-security-stat">
+        <strong id="secApproved">—</strong>
+        <span>Freigeschaltete Benutzer</span>
+      </div>
+
+      <div class="mirage-security-stat">
+        <strong id="secPending">—</strong>
+        <span>Ausstehende Freigaben</span>
+      </div>
+
+      <div class="mirage-security-stat">
+        <strong id="secBanned">—</strong>
+        <span>Gesperrte Benutzer</span>
+      </div>
+
+      <div class="mirage-security-stat">
+        <strong id="secAdmins">—</strong>
+        <span>Freigeschaltete Administratoren
+        und Projektleitung</span>
+      </div>
+
+      <div class="mirage-security-stat">
+        <strong id="secLogs">—</strong>
+        <span>Gespeicherte Logeinträge</span>
+      </div>
+
+    </div>
+
+    <div class="event-info">
+      🛡️ Diese Übersicht zeigt vorhandene
+      Benutzer- und Auditdaten. Sie erkennt
+      nicht automatisch Angriffe oder
+      fehlgeschlagene Anmeldeversuche.
+    </div>
+
+    <p id="mirageSecurityMessage">
+      Noch nicht geladen.
+    </p>
+  `;
+
+  systemPanel.append(section);
+
+  const get = id => document.getElementById(id);
+
+  function hasSecurityAccess() {
+    return (
+      typeof owner !== 'undefined' &&
+      owner === true &&
+      typeof isOwner === 'function' &&
+      isOwner() &&
+      typeof approved !== 'undefined' &&
+      approved === true &&
+      typeof activeBan === 'function' &&
+      !activeBan(ban)
+    );
+  }
+
+  async function loadSecurity() {
+    if (!hasSecurityAccess()) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+
+    const button = get('mirageSecurityRefresh');
+    const message = get('mirageSecurityMessage');
+
+    button.disabled = true;
+    message.textContent =
+      '🔄 Sicherheitsdaten werden geladen ...';
+
+    try {
+      if (!db) {
+        throw new Error(
+          'Keine Verbindung zu Supabase.'
+        );
+      }
+
+      const { data, error } = await db.rpc(
+        'mirage_security_overview'
+      );
+
+      if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          'Keine Sicherheitsdaten erhalten.'
+        );
+      }
+
+      get('secTotal').textContent =
+        data.total_users ?? '—';
+
+      get('secApproved').textContent =
+        data.approved_users ?? '—';
+
+      get('secPending').textContent =
+        data.pending_users ?? '—';
+
+      get('secBanned').textContent =
+        data.banned_users ?? '—';
+
+      get('secAdmins').textContent =
+        data.privileged_users ?? '—';
+
+      get('secLogs').textContent =
+        data.audit_entries ?? '—';
+
+      const checked = data.checked_at
+        ? new Date(data.checked_at)
+        : null;
+
+      message.textContent =
+        '✅ Daten erfolgreich geladen.' +
+        (
+          checked &&
+          !Number.isNaN(checked.getTime())
+          ? ' Letzte Prüfung: ' +
+            checked.toLocaleString('de-DE', {
+              timeZone: 'Europe/Berlin'
+            })
+          : ''
+        );
+
+    } catch (error) {
+      console.error(
+        'Mirage Sicherheitscenter:',
+        error
+      );
+
+      message.textContent =
+        '❌ Fehler: ' + error.message;
+
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  get('mirageSecurityRefresh').addEventListener(
+    'click',
+    loadSecurity
+  );
+
+  const systemButton = get('systemBtn');
+
+  if (systemButton) {
+    systemButton.addEventListener(
+      'click',
+      () => {
+        if (hasSecurityAccess()) {
+          loadSecurity();
+        }
+      }
+    );
+  }
+
+  // Anzeige beim Wechsel des Kontos schützen.
+  const previousShowCalendarSecurity =
+    showCalendar;
+
+  showCalendar = function(...args) {
+    const result =
+      previousShowCalendarSecurity(...args);
+
+    section.style.display =
+      hasSecurityAccess() ? 'block' : 'none';
+
+    return result;
+  };
+
+  section.style.display = 'none';
+
+})();
+</script>
+
+<!-- ENDE MIRAGE SICHERHEITSCENTER V1 -->
+
 </body>
 </html>
