@@ -1165,6 +1165,16 @@ function renderCalendar(){
         }
       };
 
+      // Zusage-Button: auch für Teammitglieder ohne Bearbeitungsrecht.
+      if(ev.id){
+        const rsvp=document.createElement('button');
+        rsvp.type='button';
+        rsvp.className='mirage-rsvp-open';
+        rsvp.textContent='✓ Teilnahme';
+        rsvp.title='Zu- oder Absage für diesen Termin';
+        rsvp.onclick=e=>{e.stopPropagation();mirageOpenRsvp(ev)};
+        box.append(rsvp);
+      }
       col.append(box);
     }
 
@@ -4487,6 +4497,92 @@ card.append(
 })();
 </script>
 <!-- ENDE MIRAGE BENACHRICHTIGUNGSCENTER V1 -->
+
+<!-- MIRAGE TERMIN-ZUSAGEN V1 -->
+<style>
+.mirage-rsvp-open{position:absolute;right:5px;bottom:5px;padding:3px 7px!important;font-size:10px!important;border-radius:6px!important;background:#173c77!important;color:#fff!important;z-index:2;max-width:95%;}
+#mirageRsvpBackdrop{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:999999;display:none;align-items:center;justify-content:center;padding:16px}
+#mirageRsvpDialog{width:min(530px,100%);max-height:88vh;overflow:auto;background:#0e1a30;border:1px solid #2a4b7e;border-radius:16px;padding:22px;color:#fff;box-shadow:0 15px 60px #0009}
+#mirageRsvpDialog button{cursor:pointer}
+.mirage-rsvp-options{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.mirage-rsvp-options button{border:1px solid #3d6098;background:#142b4f;color:white;padding:11px;border-radius:9px}
+.mirage-rsvp-options button.selected{background:#2563eb;border-color:#93c5fd}
+.mirage-rsvp-line{padding:8px 0;border-bottom:1px solid #233750}
+</style>
+<div id="mirageRsvpBackdrop" role="presentation">
+  <section id="mirageRsvpDialog" role="dialog" aria-modal="true" aria-labelledby="mirageRsvpHeading">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <h2 id="mirageRsvpHeading" style="margin:0">📅 Termin-Teilnahme</h2>
+      <button id="mirageRsvpClose" type="button" aria-label="Schließen">✕</button>
+    </div>
+    <p id="mirageRsvpInfo"></p>
+    <p id="mirageRsvpStatus" aria-live="polite"></p>
+    <div class="mirage-rsvp-options">
+      <button type="button" data-rsvp="yes">✅ Zusagen</button>
+      <button type="button" data-rsvp="maybe">❔ Vielleicht</button>
+      <button type="button" data-rsvp="no">❌ Absagen</button>
+    </div>
+    <div id="mirageRsvpSummary"></div>
+    <div id="mirageRsvpPeople"></div>
+  </section>
+</div>
+<script>
+(function(){
+  const overlay=document.getElementById('mirageRsvpBackdrop');
+  const status=document.getElementById('mirageRsvpStatus');
+  const summary=document.getElementById('mirageRsvpSummary');
+  const people=document.getElementById('mirageRsvpPeople');
+  const options=[...overlay.querySelectorAll('[data-rsvp]')];
+  let activeEvent=null,version=0,saving=false;
+  const labels={yes:'✅ Zugesagt',maybe:'❔ Vielleicht',no:'❌ Abgesagt'};
+  const close=()=>{overlay.style.display='none';activeEvent=null;version++};
+  document.getElementById('mirageRsvpClose').onclick=close;
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.style.display==='flex')close()});
+  async function refresh(){
+    const ev=activeEvent,v=version;
+    if(!ev||!user||!approved||activeBan(ban))return;
+    status.textContent='Teilnahmen werden geladen …';
+    const {data,error}=await db.from('mirage_event_rsvps').select('user_id,response,updated_at').eq('event_id',String(ev.id));
+    if(v!==version)return;
+    if(error){status.textContent='Fehler beim Laden: '+error.message+' – bitte zuerst das SQL ausführen.';return}
+    const rows=data||[];
+    const own=rows.find(x=>x.user_id===user.id);
+    options.forEach(b=>b.classList.toggle('selected',own?.response===b.dataset.rsvp));
+    status.textContent=own?'Deine Antwort: '+labels[own.response]:'Du hast noch nicht geantwortet.';
+    // Die Projektleitung sieht die Antworten aller Mitglieder; andere nur ihre eigene.
+    if(isOwner()){
+      // Sichtbarkeit der Gesamtantworten wird durch die SQL-Richtlinien gesteuert.
+      summary.textContent='Zusagen: '+rows.filter(x=>x.response==='yes').length+' · Vielleicht: '+rows.filter(x=>x.response==='maybe').length+' · Absagen: '+rows.filter(x=>x.response==='no').length;
+      people.replaceChildren();
+      for(const r of rows){
+        const line=document.createElement('div');line.className='mirage-rsvp-line';
+        line.textContent=(typeof creatorName==='function'?creatorName(r.user_id):r.user_id)+' — '+labels[r.response];
+        people.append(line);
+      }
+    }else{summary.textContent='Deine Teilnahme ist gespeichert.';people.replaceChildren()}
+  }
+  window.mirageOpenRsvp=async function(ev){
+    if(!ev?.id||!user||!approved||activeBan(ban))return;
+    activeEvent=ev;version++;
+    document.getElementById('mirageRsvpInfo').textContent=ev.title+' · '+ev.date+' · '+ev.start+'–'+ev.end;
+    summary.textContent='';people.replaceChildren();
+    overlay.style.display='flex';
+    await refresh();
+  };
+  options.forEach(button=>button.addEventListener('click',async()=>{
+    if(saving||!activeEvent||!user)return;
+    saving=true;options.forEach(x=>x.disabled=true);
+    try{
+      const {error}=await db.from('mirage_event_rsvps').upsert({event_id:String(activeEvent.id),user_id:user.id,response:button.dataset.rsvp},{onConflict:'event_id,user_id'});
+      if(error)throw error;
+      await refresh();
+    }catch(e){status.textContent='Speichern fehlgeschlagen: '+e.message}
+    finally{saving=false;options.forEach(x=>x.disabled=false)}
+  }));
+})();
+</script>
+<!-- ENDE MIRAGE TERMIN-ZUSAGEN V1 -->
 
 </body>
 </html>
