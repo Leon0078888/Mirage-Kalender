@@ -2134,5 +2134,197 @@ document.addEventListener('visibilitychange',()=>{
 
 init();
 </script>
+  
+<script>
+/* MIRAGE LOGCENTER – 10 EINTRÄGE PRO SEITE */
+
+(() => {
+  const PAGE_SIZE = 10;
+  let currentPage = 1;
+
+  const originalRenderLogs = renderLogs;
+
+  const navigation = document.createElement('div');
+  navigation.className = 'flex';
+  navigation.style.justifyContent = 'center';
+  navigation.style.margin = '15px 0';
+  navigation.style.gap = '12px';
+
+  const previousButton = document.createElement('button');
+  previousButton.textContent = '‹ Zurück';
+
+  const pageLabel = document.createElement('span');
+  pageLabel.className = 'small';
+  pageLabel.style.alignSelf = 'center';
+
+  const nextButton = document.createElement('button');
+  nextButton.textContent = 'Weiter ›';
+
+  navigation.append(
+    previousButton,
+    pageLabel,
+    nextButton
+  );
+
+  $('logItems').after(navigation);
+
+  function filteredLogs() {
+    const search = $('logSearch').value
+      .trim()
+      .toLocaleLowerCase('de');
+
+    const action = $('logAction').value;
+    const from = $('logFrom').value;
+    const to = $('logTo').value;
+
+    return logRows.filter(entry => {
+      if (
+        action &&
+        !String(entry.action).startsWith(action)
+      ) {
+        return false;
+      }
+
+      const date = String(entry.created_at || '')
+        .slice(0, 10);
+
+      if (from && date < from) return false;
+      if (to && date > to) return false;
+
+      const haystack = [
+        logLabels[entry.action] || entry.action,
+        logActor(entry),
+        logSubject(entry),
+        entry.entity_id,
+        JSON.stringify(entry.old_data),
+        JSON.stringify(entry.new_data)
+      ].join(' ').toLocaleLowerCase('de');
+
+      return !search || haystack.includes(search);
+    });
+  }
+
+  renderLogs = function() {
+    const allRows = logRows;
+    const allHasMore = logHasMore;
+
+    const matching = filteredLogs();
+    const pageCount = Math.max(
+      1,
+      Math.ceil(matching.length / PAGE_SIZE)
+    );
+
+    currentPage = Math.min(currentPage, pageCount);
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const visible = matching.slice(
+      start,
+      start + PAGE_SIZE
+    );
+
+    try {
+      logRows = visible;
+      logHasMore = false;
+
+      originalRenderLogs();
+    } finally {
+      logRows = allRows;
+      logHasMore = allHasMore;
+    }
+
+    $('logSummary').textContent =
+      matching.length + ' passende Einträge · ' +
+      allRows.length + ' geladen' +
+      (allHasMore ? ' · weitere vorhanden' : '');
+
+    pageLabel.textContent =
+      'Seite ' + currentPage + ' von ' + pageCount;
+
+    previousButton.disabled = currentPage <= 1;
+
+    nextButton.disabled =
+      currentPage >= pageCount && !allHasMore;
+
+    navigation.style.display =
+      matching.length || allHasMore ? 'flex' : 'none';
+
+    $('logMore').style.display = 'none';
+  };
+
+  previousButton.onclick = () => {
+    if (currentPage <= 1) return;
+
+    currentPage--;
+    renderLogs();
+  };
+
+  nextButton.onclick = async () => {
+    const matching = filteredLogs();
+    const availablePages = Math.ceil(
+      matching.length / PAGE_SIZE
+    );
+
+    if (currentPage < availablePages) {
+      currentPage++;
+      renderLogs();
+      return;
+    }
+
+    if (logHasMore) {
+      const oldCount = logRows.length;
+
+      await loadLogs(false);
+
+      if (logRows.length > oldCount) {
+        const newPageCount = Math.ceil(
+          filteredLogs().length / PAGE_SIZE
+        );
+
+        if (currentPage < newPageCount) {
+          currentPage++;
+        }
+      }
+
+      renderLogs();
+    }
+  };
+
+  for (const id of [
+    'logSearch',
+    'logAction',
+    'logFrom',
+    'logTo'
+  ]) {
+    $(id).addEventListener(
+      id === 'logSearch' ? 'input' : 'change',
+      event => {
+        event.stopImmediatePropagation();
+        currentPage = 1;
+        renderLogs();
+      },
+      true
+    );
+  }
+
+  $('logReload').addEventListener(
+    'click',
+    () => {
+      currentPage = 1;
+    },
+    true
+  );
+
+  $('logsBtn').addEventListener(
+    'click',
+    () => {
+      currentPage = 1;
+    },
+    true
+  );
+
+  renderLogs();
+})();
+</script>
+
 </body>
 </html>
