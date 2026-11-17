@@ -4306,5 +4306,107 @@ card.append(
 </script>
 <!-- ENDE MIRAGE CONTROL CENTER V2 -->
 
+
+<!-- MIRAGE TERMINVERLAUF V1 -->
+<style>
+#mirageHistoryTools{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+#mirageHistorySearch{flex:1;min-width:180px;background:#0a1524;border:1px solid #365477;border-radius:9px;padding:10px;color:#fff}
+#mirageHistoryList{display:grid;gap:10px}
+.mirage-history-entry{background:#14253b;border:1px solid #2c4564;border-radius:12px;padding:13px}
+.mirage-history-entry summary{cursor:pointer;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mirage-history-entry .change{margin-top:8px;padding:9px;border-radius:8px;background:#0a1829;overflow-wrap:anywhere}
+.mirage-history-entry .small{margin-top:4px}
+</style>
+<script>
+(() => {
+  const nav=document.getElementById('mirageControlNav');
+  const content=document.getElementById('mirageControlContent');
+  if(!nav||!content||document.getElementById('miragePage_history'))return;
+  const button=document.createElement('button');
+  button.type='button';button.className='mirage-control-tab';button.textContent='📜 Terminverlauf';
+  const page=document.createElement('div');page.id='miragePage_history';page.className='mirage-control-page';
+  page.innerHTML=`<div class="mirage-control-heading"><h2>📜 Termin-Änderungsverlauf</h2><p>Erstellte, bearbeitete und gelöschte Termine mit den protokollierten Änderungen.</p></div><div id="mirageHistoryTools"><input id="mirageHistorySearch" placeholder="Termin, Person oder Aktion suchen …" aria-label="Terminverlauf durchsuchen"><button type="button" id="mirageHistoryRefresh">🔄 Aktualisieren</button></div><p class="small" id="mirageHistoryStatus">Noch nicht geladen.</p><div id="mirageHistoryList"></div><div class="actions"><button type="button" id="mirageHistoryMore" style="display:none">Weitere Einträge laden</button></div>`;
+  nav.append(button);content.append(page);
+  const list=page.querySelector('#mirageHistoryList');
+  const status=page.querySelector('#mirageHistoryStatus');
+  const search=page.querySelector('#mirageHistorySearch');
+  const more=page.querySelector('#mirageHistoryMore');
+  const refresh=page.querySelector('#mirageHistoryRefresh');
+  let rows=[],pageNumber=0,hasMore=false,busy=false;
+  const size=50;
+  function label(action){return ({'event.created':'🟢 Termin erstellt','event.updated':'🟡 Termin bearbeitet','event.deleted':'🔴 Termin gelöscht'})[action]||action}
+  function value(v){if(v==null||v==='')return '—';return typeof v==='object'?JSON.stringify(v):String(v)}
+  const fields={title:'Titel',category:'Kategorie',event_date:'Datum',start_time:'Beginn',end_time:'Ende',description:'Beschreibung'};
+  function render(){
+    list.replaceChildren();
+    const needle=search.value.trim().toLocaleLowerCase('de');
+    const filtered=rows.filter(e=>{
+      const data=e.new_data||e.old_data||{};
+      const actor=typeof creatorName==='function'?creatorName(e.actor_id):String(e.actor_id||'System');
+      return [label(e.action),actor,data.title,JSON.stringify(e.old_data),JSON.stringify(e.new_data)].join(' ').toLocaleLowerCase('de').includes(needle);
+    });
+    status.textContent=filtered.length+' Einträge angezeigt · '+rows.length+' geladen'+(hasMore?' · weitere vorhanden':'');
+    if(!filtered.length){const p=document.createElement('p');p.textContent='Keine passenden Termineinträge in den geladenen Daten.';list.append(p)}
+    for(const e of filtered){
+      const card=document.createElement('details');card.className='mirage-history-entry';
+      const summary=document.createElement('summary');
+      const heading=document.createElement('strong');heading.textContent=label(e.action);
+      const time=document.createElement('span');time.className='small';time.textContent=new Date(e.created_at).toLocaleString('de-DE',{timeZone:'Europe/Berlin'});
+      summary.append(heading,time);card.append(summary);
+      const data=e.new_data||e.old_data||{};
+      const title=document.createElement('div');title.style.marginTop='8px';title.textContent='📅 '+(data.title||'Unbenannter Termin');card.append(title);
+      const actor=document.createElement('div');actor.className='small';actor.textContent='👤 Bearbeitet von: '+(typeof creatorName==='function'?creatorName(e.actor_id):String(e.actor_id||'System'));card.append(actor);
+      const before=e.old_data||{},after=e.new_data||{};
+      const keys=new Set([...Object.keys(before),...Object.keys(after)]);
+      for(const key of keys){
+        if(['id','created_at','created_by','user_id'].includes(key))continue;
+        if(JSON.stringify(before[key])===JSON.stringify(after[key]))continue;
+        const change=document.createElement('div');change.className='change';
+        const field=document.createElement('strong');field.textContent=fields[key]||key;
+        const old=document.createElement('div');old.textContent='Vorher: '+value(before[key]);
+        const next=document.createElement('div');next.textContent='Nachher: '+value(after[key]);
+        change.append(field,old,next);card.append(change);
+      }
+      list.append(card);
+    }
+    more.style.display=hasMore?'inline-block':'none';
+  }
+  async function load(reset=true){
+    if(busy||!owner||!db)return;
+    busy=true;refresh.disabled=true;more.disabled=true;
+    status.textContent='Terminverlauf wird geladen …';
+    try{
+      const nextPage=reset?0:pageNumber+1;
+      const {data,error}=await db.from('mirage_audit_logs')
+        .select('id,created_at,actor_id,action,old_data,new_data')
+        .in('action',['event.created','event.updated','event.deleted'])
+        .order('id',{ascending:false})
+        .range(nextPage*size,(nextPage+1)*size-1);
+      if(error)throw error;
+      if(reset)rows=[];
+      rows.push(...(data||[]));pageNumber=nextPage;hasMore=(data||[]).length===size;
+      render();
+    }catch(e){status.textContent='Fehler beim Laden: '+e.message}
+    finally{busy=false;refresh.disabled=false;more.disabled=false}
+  }
+  button.addEventListener('click',()=>{
+    if(!owner)return;
+    nav.querySelectorAll('.mirage-control-tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-current','false')});
+    content.querySelectorAll('.mirage-control-page').forEach(x=>x.classList.remove('active'));
+    button.classList.add('active');button.setAttribute('aria-current','page');page.classList.add('active');
+    load(true);
+  });
+  // Existing tabs already activate their own pages. Remove the history page on any other tab click.
+  nav.addEventListener('click',event=>{
+    const target=event.target.closest('.mirage-control-tab');
+    if(target&&target!==button){button.classList.remove('active');page.classList.remove('active')}
+  });
+  refresh.addEventListener('click',()=>load(true));
+  more.addEventListener('click',()=>load(false));
+  search.addEventListener('input',render);
+})();
+</script>
+<!-- ENDE MIRAGE TERMINVERLAUF V1 -->
+
 </body>
 </html>
