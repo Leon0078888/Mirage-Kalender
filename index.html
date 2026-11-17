@@ -159,6 +159,8 @@ p{color:var(--muted)}
 <div class="brand"><div class="logo">M</div><div><b>MIRAGE</b><small>KALENDER</small></div></div>
 <div class="flex">
 <span id="userStatus" class="small"></span>
+<button type="button" id="mirageTabCalendar" class="primary">📅 Kalender</button>
+<button type="button" id="mirageTabProtocols">📋 Protokolle</button>
 <button id="adminBtn" class="primary" style="display:none">🛡 Admin</button>
 <button id="logsBtn" class="primary" style="display:none">📜 Logs</button>
 <button id="logoutBtn">Abmelden</button>
@@ -234,6 +236,7 @@ p{color:var(--muted)}
 </div>
 </section>
 
+<div id="mirageCalendarContent">
 <section class="panel">
 <div class="flex" style="margin-bottom:12px">
 <h2>👥 Mirage Teamstatus</h2>
@@ -287,6 +290,12 @@ p{color:var(--muted)}
   </div>
   <div id="mirageAttendanceStatus" class="small" style="margin:12px 0">Teilnahmen werden geladen …</div>
   <div id="mirageAttendanceList"></div>
+</section>
+</div>
+<section id="mirageProtocolCenter" class="panel" style="display:none">
+<div class="modalhead"><div><h2>📋 Mirage Protokollcenter</h2><p>Alle Gesprächsprotokolle zu euren Terminen.</p></div><button type="button" id="mirageProtocolNew" class="primary">＋ Protokoll erstellen</button></div>
+<div class="field"><label for="mirageProtocolSearch">Protokolle durchsuchen</label><input id="mirageProtocolSearch" placeholder="Termin, Information, Aufgabe …"></div>
+<p id="mirageProtocolStatus" class="small">Protokolle werden geladen …</p><div id="mirageProtocolList"></div>
 </section>
 <p class="small">MIRAGE KALENDER SYSTEM · Zentrale Mirage-Datenbank</p>
 </div>
@@ -4778,6 +4787,159 @@ card.append(
 })();
 </script>
 <!-- ENDE MIRAGE TERMINERINNERUNGEN V2 -->
+
+
+<!-- MIRAGE PROTOKOLLCENTER V1 -->
+<style>
+#mirageProtocolCenter .field input,#mirageProtocolCenter .field select,#mirageProtocolCenter .field textarea{width:100%;background:#0a1524;border:1px solid #365477;border-radius:8px;padding:10px;color:white}
+.mirage-protocol-card{background:#14253b;border:1px solid #2c4564;border-radius:12px;padding:15px;margin:12px 0}
+.mirage-protocol-card h3{margin:0 0 6px}.mirage-protocol-card p{white-space:pre-wrap;overflow-wrap:anywhere}
+.mirage-protocol-item{display:flex;gap:10px;align-items:flex-start;padding:9px;background:#0c1a2c;border-radius:8px;margin:7px 0}
+.mirage-protocol-item input{width:18px;height:18px;flex-shrink:0;margin-top:3px}.mirage-protocol-item.done .mirage-protocol-title{text-decoration:line-through;color:#93a7c0}
+#mirageProtocolModal .modal{width:min(720px,100%)}
+.mirage-protocol-progress{height:7px;background:#263d58;border-radius:10px;overflow:hidden;margin:9px 0}.mirage-protocol-progress span{display:block;background:#3485ec;height:100%}
+</style>
+<div class="backdrop" id="mirageProtocolModal">
+ <form class="modal" id="mirageProtocolForm">
+  <div class="modalhead"><h2 id="mirageProtocolFormTitle">Gesprächsprotokoll</h2><button type="button" id="mirageProtocolClose">✕</button></div>
+  <input type="hidden" id="mirageProtocolId">
+  <div class="field"><label for="mirageProtocolEvent">Verknüpfter Termin</label><select id="mirageProtocolEvent" required></select></div>
+  <div class="field"><label for="mirageProtocolInfo">📝 Allgemeine Informationen</label><textarea id="mirageProtocolInfo" rows="6" maxlength="20000" placeholder="Gesprächsnotizen und wichtige Informationen"></textarea></div>
+  <div class="field"><label for="mirageProtocolState">Status</label><select id="mirageProtocolState"><option value="draft">Entwurf</option><option value="completed">Abgeschlossen</option></select></div>
+  <h3>✅ Aufgaben &amp; Beschlüsse</h3><p class="small">Jede Zeile ist ein einzelner Punkt. Verantwortliche und Fristen sind optional.</p>
+  <div id="mirageProtocolEditItems"></div>
+  <button type="button" id="mirageProtocolAddItem">＋ Punkt hinzufügen</button>
+  <p id="mirageProtocolFormError" class="message"></p>
+  <div class="actions"><button type="button" id="mirageProtocolCancel">Abbrechen</button><button type="submit" class="primary" id="mirageProtocolSave">Speichern</button></div>
+ </form>
+</div>
+<script>
+(function(){
+ 'use strict';
+ const el=id=>document.getElementById(id);
+ const allowed=()=>!!(user&&approved&&!activeBan(ban));
+ const editor=()=>allowed()&&canEdit();
+ const leader=()=>allowed()&&canManage();
+ let protocols=[],items=[],active='calendar',loading=false;
+ const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const eventById=id=>events.find(e=>String(e.id)===String(id));
+ const eventLabel=p=>{const ev=eventById(p.event_id);return ev?ev.title+' · '+ev.date+' · '+ev.start+' Uhr':(p.event_title||'Gelöschter Termin')+' · '+(p.event_date||'')};
+ function setTab(tab){
+  active=tab;
+  el('mirageCalendarContent').style.display=tab==='calendar'?'':'none';
+  el('mirageProtocolCenter').style.display=tab==='protocols'&&allowed()?'block':'none';
+  el('mirageTabCalendar').classList.toggle('primary',tab==='calendar');
+  el('mirageTabProtocols').classList.toggle('primary',tab==='protocols');
+  el('mirageProtocolNew').style.display=editor()?'inline-block':'none';
+  if(tab==='protocols'&&allowed())load();
+ }
+ el('mirageTabCalendar').onclick=()=>setTab('calendar');
+ el('mirageTabProtocols').onclick=()=>setTab('protocols');
+ async function load(){
+  if(!allowed()||loading||!db)return;
+  loading=true;el('mirageProtocolStatus').textContent='Protokolle werden geladen …';
+  try{
+   const [a,b]=await Promise.all([
+    db.from('mirage_protocols').select('*').order('created_at',{ascending:false}),
+    db.from('mirage_protocol_items').select('*').order('position',{ascending:true})
+   ]);
+   if(a.error)throw a.error;if(b.error)throw b.error;
+   if(!allowed())return;
+   protocols=a.data||[];items=b.data||[];render();
+  }catch(e){el('mirageProtocolStatus').textContent='Protokolle konnten nicht geladen werden: '+e.message}
+  finally{loading=false}
+ }
+ function render(){
+  if(!allowed())return;
+  const term=el('mirageProtocolSearch').value.trim().toLocaleLowerCase('de');
+  const selected=protocols.filter(p=>(eventLabel(p)+' '+p.information+' '+items.filter(i=>i.protocol_id===p.id).map(i=>i.title).join(' ')).toLocaleLowerCase('de').includes(term));
+  el('mirageProtocolStatus').textContent=selected.length+' Protokoll(e) angezeigt';
+  const list=el('mirageProtocolList');list.replaceChildren();
+  if(!selected.length){const p=document.createElement('p');p.textContent='Keine passenden Protokolle vorhanden.';list.append(p)}
+  for(const p of selected){
+   const card=document.createElement('article');card.className='mirage-protocol-card';
+   const rows=items.filter(i=>i.protocol_id===p.id).sort((a,b)=>a.position-b.position);
+   const done=rows.filter(i=>i.completed).length;
+   card.innerHTML='<h3>📅 '+safe(eventLabel(p))+'</h3><span class="small">'+(p.status==='completed'?'✅ Abgeschlossen':'📝 Entwurf')+' · Protokollführer: '+safe(creatorName(p.created_by))+'</span><h4>📝 Allgemeine Informationen</h4><p>'+safe(p.information||'Keine Informationen eingetragen.')+'</p><h4>✅ Aufgaben &amp; Beschlüsse</h4><div class="small">'+done+' von '+rows.length+' Punkten abgehakt</div><div class="mirage-protocol-progress"><span style="width:'+(rows.length?100*done/rows.length:0)+'%"></span></div>';
+   for(const i of rows){
+    const row=document.createElement('label');row.className='mirage-protocol-item'+(i.completed?' done':'');
+    const check=document.createElement('input');check.type='checkbox';check.checked=!!i.completed;check.disabled=!editor();
+    check.onchange=async()=>{
+     if(!editor()){check.checked=!check.checked;return}
+     check.disabled=true;
+     const {error}=await db.from('mirage_protocol_items').update({completed:check.checked}).eq('id',i.id);
+     if(error){alert('Speichern fehlgeschlagen: '+error.message);check.checked=!check.checked}
+     await load();
+    };
+    const text=document.createElement('div');text.innerHTML='<div class="mirage-protocol-title"><strong>'+safe(i.title)+'</strong></div><div class="small">'+(i.item_type==='decision'?'⚖️ Beschluss':'📌 Aufgabe')+(i.assignee?' · '+safe(i.assignee):'')+(i.due_date?' · Frist: '+safe(i.due_date):'')+'</div>';
+    row.append(check,text);card.append(row);
+   }
+   if(editor()){
+    const edit=document.createElement('button');edit.type='button';edit.textContent='✏️ Bearbeiten';edit.onclick=()=>open(p);card.append(edit);
+   }
+   if(leader()){
+    const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='🗑 Löschen';del.style.marginLeft='8px';
+    del.onclick=async()=>{if(!confirm('Dieses Protokoll wirklich löschen?'))return;const {error}=await db.from('mirage_protocols').delete().eq('id',p.id);if(error)alert(error.message);else await load()};card.append(del);
+   }
+   list.append(card);
+  }
+ }
+ el('mirageProtocolSearch').oninput=render;
+ function addItem(i={}){
+  const row=document.createElement('div');row.className='mirage-protocol-card';row.dataset.itemId=i.id||'';
+  row.innerHTML='<div class="twocol"><div class="field"><label>Art</label><select class="pi-type"><option value="task">Aufgabe</option><option value="decision">Beschluss</option></select></div><div class="field"><label>Frist (optional)</label><input class="pi-due" type="date"></div></div><div class="field"><label>Aufgabe / Beschluss</label><input class="pi-title" maxlength="500" required placeholder="Was muss erledigt werden?"></div><div class="field"><label>Verantwortlich (optional)</label><input class="pi-assignee" maxlength="150"></div><button type="button" class="danger pi-remove">Punkt entfernen</button>';
+  row.querySelector('.pi-type').value=i.item_type||'task';row.querySelector('.pi-due').value=i.due_date||'';
+  row.querySelector('.pi-title').value=i.title||'';row.querySelector('.pi-assignee').value=i.assignee||'';
+  row.querySelector('.pi-remove').onclick=()=>row.remove();el('mirageProtocolEditItems').append(row);
+ }
+ function open(p=null){
+  if(!editor())return;
+  el('mirageProtocolForm').reset();el('mirageProtocolFormError').textContent='';
+  el('mirageProtocolId').value=p?.id||'';
+  el('mirageProtocolFormTitle').textContent=p?'Protokoll bearbeiten':'Neues Protokoll';
+  el('mirageProtocolInfo').value=p?.information||'';el('mirageProtocolState').value=p?.status||'draft';
+  const select=el('mirageProtocolEvent');select.replaceChildren();
+  const used=new Set(protocols.filter(x=>x.id!==p?.id&&x.event_id).map(x=>String(x.event_id)));
+  for(const ev of events){if(used.has(String(ev.id)))continue;const opt=document.createElement('option');opt.value=String(ev.id);opt.textContent=ev.title+' · '+ev.date+' · '+ev.start;select.append(opt)}
+  if(p?.event_id&&!eventById(p.event_id)){const opt=document.createElement('option');opt.value=p.event_id;opt.textContent=eventLabel(p);select.append(opt)}
+  select.value=p?.event_id||select.options[0]?.value||'';
+  if(!select.value){alert('Es gibt keinen freien Kalendertermin. Bitte zuerst einen Termin erstellen.');return}
+  el('mirageProtocolEditItems').replaceChildren();
+  for(const i of items.filter(i=>i.protocol_id===p?.id))addItem(i);
+  el('mirageProtocolModal').classList.add('open');
+ }
+ el('mirageProtocolNew').onclick=()=>open();
+ el('mirageProtocolAddItem').onclick=()=>addItem();
+ const close=()=>el('mirageProtocolModal').classList.remove('open');
+ el('mirageProtocolClose').onclick=close;el('mirageProtocolCancel').onclick=close;
+ el('mirageProtocolModal').onclick=e=>{if(e.target===el('mirageProtocolModal'))close()};
+ el('mirageProtocolForm').onsubmit=async e=>{
+  e.preventDefault();if(!editor())return;
+  const save=el('mirageProtocolSave');save.disabled=true;
+  try{
+   const id=el('mirageProtocolId').value;
+   const eventId=el('mirageProtocolEvent').value;
+   const ev=eventById(eventId);
+   const old=protocols.find(p=>String(p.id)===id);
+   const payload={event_id:eventId,event_title:ev?.title||old?.event_title||'',event_date:ev?.date||old?.event_date||null,information:el('mirageProtocolInfo').value.trim(),status:el('mirageProtocolState').value};
+   const result=id?await db.from('mirage_protocols').update(payload).eq('id',id).select('id').single():await db.from('mirage_protocols').insert({...payload,created_by:user.id}).select('id').single();
+   if(result.error)throw result.error;
+   const pid=result.data.id;
+   const rows=[...el('mirageProtocolEditItems').children].map((row,position)=>({id:row.dataset.itemId||null,protocol_id:pid,item_type:row.querySelector('.pi-type').value,title:row.querySelector('.pi-title').value.trim(),assignee:row.querySelector('.pi-assignee').value.trim(),due_date:row.querySelector('.pi-due').value||null,position}));
+   const original=items.filter(i=>i.protocol_id===pid);
+   const keep=new Set(rows.filter(r=>r.id).map(r=>String(r.id)));
+   const removed=original.filter(i=>!keep.has(String(i.id))).map(i=>i.id);
+   if(removed.length){const d=await db.from('mirage_protocol_items').delete().in('id',removed);if(d.error)throw d.error}
+   for(const row of rows){const {id:rowId,...data}=row;const r=rowId?await db.from('mirage_protocol_items').update(data).eq('id',rowId):await db.from('mirage_protocol_items').insert(data);if(r.error)throw r.error}
+   close();await load();
+  }catch(err){el('mirageProtocolFormError').textContent='Speichern fehlgeschlagen: '+err.message}
+  finally{save.disabled=false}
+ };
+ setInterval(()=>{if(active==='protocols'&&allowed()&&document.visibilityState==='visible')load()},30000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&active==='protocols')load()});
+ window.mirageOpenProtocolForEvent=ev=>{setTab('protocols');load().then(()=>{if(editor())open(protocols.find(p=>String(p.event_id)===String(ev.id))||null)})};
+})();
+</script>
 
 </body>
 </html>
