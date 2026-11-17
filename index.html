@@ -1,4 +1,3 @@
-```
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -4699,19 +4698,22 @@ card.append(
   const button=panel.querySelector('#mirageReminderClear');
   button.textContent=collapsed?'Erinnerungen wieder einblenden':'Angezeigte Erinnerungen ausblenden';
   if(collapsed){status.textContent='Erinnerungen ausgeblendet – mit dem Button wieder einblenden.';return}
+  const now=Date.now();
+  const currentEvents=Array.isArray(events)?events:[];
   const entries=Object.entries(read()).map(([id,stored])=>{
    const parts=id.split('|');
-   const ev=(Array.isArray(events)?events:[]).find(e=>String(e.id)===parts[0]);
+   const ev=currentEvents.find(e=>String(e.id)===parts[0]&&e.date===parts[1]&&e.start===parts[2]);
+   if(!ev||!(startTime(ev)>now))return null;
    const data=stored&&typeof stored==='object'?stored:{};
-   return {at:typeof stored==='string'?stored:data.at||'',title:data.title||ev?.title||'Früherer Termin',date:data.date||parts[1]||'',start:data.start||parts[2]||'',description:data.description||ev?.description||'',stage:parts[3]};
-  }).filter(e=>e.stage==='24h'||e.stage==='30m').sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,20);
+   return {at:typeof stored==='string'?stored:data.at||'',title:ev.title,date:ev.date,start:ev.start,description:ev.description||'',stage:parts[3]};
+  }).filter(e=>e&&(e.stage==='24h'||e.stage==='30m')).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,20);
   for(const e of entries){
    const item=document.createElement('div');item.className='mirage-reminder-item';
    const head=document.createElement('strong');head.textContent=(e.stage==='24h'?'📅 Erinnerung (24 Stunden)':'⏰ Bald geht es los (30 Minuten)')+' · '+e.title;
    const info=document.createElement('small');info.textContent=e.date+' · '+e.start+' Uhr'+(e.description?' · '+e.description:'');
    item.append(head,info);list.append(item);
   }
-  status.textContent=entries.length?entries.length+' gespeicherte Erinnerung(en).':'Noch keine Erinnerungen vorhanden.';
+  status.textContent=entries.length?entries.length+' Erinnerung(en) zu kommenden Terminen.':'Keine aktuellen Erinnerungen zu kommenden Terminen.';
  }
  async function check(){
   if(running||document.visibilityState==='hidden')return;
