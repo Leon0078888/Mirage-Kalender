@@ -3392,5 +3392,504 @@ init();
 </script>
 <!-- ENDE MIRAGE SYSTEMVERWALTUNG ERWEITERUNG -->
 
+<!-- MIRAGE AUTOMATISCHE TERMINANKÜNDIGUNGEN -->
+
+<style>
+#mirageUpcomingPanel {
+  display: none;
+  background: #101b2b;
+  border: 1px solid #365477;
+  border-radius: 15px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.mirage-upcoming-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.mirage-upcoming-header h2 {
+  margin: 0;
+  color: #eef5ff;
+}
+
+.mirage-upcoming-tag {
+  background: #173a62;
+  border: 1px solid #3485ec;
+  border-radius: 20px;
+  padding: 5px 11px;
+  color: #9dccff;
+  font-size: 11px;
+}
+
+#mirageUpcomingList {
+  display: grid;
+  gap: 12px;
+}
+
+.mirage-upcoming-item {
+  background: linear-gradient(
+    135deg,
+    #162b46,
+    #102037
+  );
+  border: 1px solid #39699e;
+  border-left: 4px solid #3485ec;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.mirage-upcoming-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #85b9ff;
+  letter-spacing: .6px;
+  margin-bottom: 8px;
+}
+
+.mirage-upcoming-title {
+  color: white;
+  font-size: 17px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+
+.mirage-upcoming-detail {
+  color: #c3d8f1;
+  font-size: 13px;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.mirage-upcoming-description {
+  color: #aabfd8;
+  font-size: 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #365477;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mirage-upcoming-countdown {
+  display: inline-block;
+  margin-top: 12px;
+  background: #193a5e;
+  color: #a5d1ff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: bold;
+}
+</style>
+
+<script>
+(() => {
+  const app = document.getElementById(
+    'calendarApp'
+  );
+
+  if (!app) {
+    console.error(
+      'Mirage Kalender wurde nicht gefunden.'
+    );
+    return;
+  }
+
+  // Doppeltes Einfügen verhindern.
+  if (document.getElementById(
+    'mirageUpcomingPanel'
+  )) {
+    return;
+  }
+
+  const panel = document.createElement('section');
+
+  panel.id = 'mirageUpcomingPanel';
+
+  panel.innerHTML = `
+    <div class="mirage-upcoming-header">
+      <h2>🔔 Anstehende Termine</h2>
+      <span class="mirage-upcoming-tag">
+        AUTOMATISCH · 24 STUNDEN
+      </span>
+    </div>
+    <div id="mirageUpcomingList"></div>
+  `;
+
+  // Direkt über dem Teamstatus anzeigen.
+  const teamSection = app.querySelector(
+    'section.panel'
+  );
+
+  if (teamSection) {
+    teamSection.insertAdjacentElement(
+      'beforebegin',
+      panel
+    );
+  } else {
+    app.prepend(panel);
+  }
+
+  const list = document.getElementById(
+    'mirageUpcomingList'
+  );
+
+  let announcements = [];
+  let loading = false;
+
+  // Datum im deutschen Format.
+  function formatDate(value) {
+    const parts = String(value).split('-');
+
+    if (parts.length !== 3) {
+      return String(value);
+    }
+
+    return (
+      parts[2] + '.' +
+      parts[1] + '.' +
+      parts[0]
+    );
+  }
+
+  function formatTime(value) {
+    return String(value || '').slice(0, 5);
+  }
+
+  // Terminbeginn in Europe/Berlin.
+  // Berücksichtigt Sommer- und Winterzeit.
+  function berlinTimestamp(date, time) {
+    const parts = String(date).split('-').map(
+      Number
+    );
+
+    const clock = String(time).split(':').map(
+      Number
+    );
+
+    if (
+      parts.length !== 3 ||
+      clock.length < 2 ||
+      parts.some(Number.isNaN) ||
+      clock.some(Number.isNaN)
+    ) {
+      return NaN;
+    }
+
+    const desired = Date.UTC(
+      parts[0],
+      parts[1] - 1,
+      parts[2],
+      clock[0],
+      clock[1]
+    );
+
+    const formatter = new Intl.DateTimeFormat(
+      'en-GB',
+      {
+        timeZone: 'Europe/Berlin',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23'
+      }
+    );
+
+    let timestamp = desired;
+
+    for (let i = 0; i < 4; i++) {
+      const fields = {};
+
+      for (const part of formatter.formatToParts(
+        new Date(timestamp)
+      )) {
+        fields[part.type] = part.value;
+      }
+
+      const displayed = Date.UTC(
+        Number(fields.year),
+        Number(fields.month) - 1,
+        Number(fields.day),
+        Number(fields.hour),
+        Number(fields.minute)
+      );
+
+      const difference = desired - displayed;
+
+      if (difference === 0) break;
+
+      timestamp += difference;
+    }
+
+    return timestamp;
+  }
+
+  function makeDetail(text) {
+    const div = document.createElement('div');
+
+    div.className = 'mirage-upcoming-detail';
+    div.textContent = text;
+
+    return div;
+  }
+
+  function renderAnnouncements() {
+    list.replaceChildren();
+
+    // Nicht anzeigen, wenn kein Benutzer
+    // mit Kalenderzugriff angemeldet ist.
+    if (
+      !user ||
+      !approved ||
+      activeBan(ban) ||
+      app.style.display === 'none'
+    ) {
+      panel.style.display = 'none';
+      return;
+    }
+
+    const now = Date.now();
+    const limit = now + 24 * 60 * 60 * 1000;
+
+    const upcoming = announcements
+      .map(event => ({
+        ...event,
+        beginsAt: berlinTimestamp(
+          event.event_date,
+          event.start_time
+        )
+      }))
+      .filter(event =>
+        Number.isFinite(event.beginsAt) &&
+        event.beginsAt > now &&
+        event.beginsAt <= limit
+      )
+      .sort((a, b) => a.beginsAt - b.beginsAt);
+
+    if (!upcoming.length) {
+      panel.style.display = 'none';
+      return;
+    }
+
+    panel.style.display = 'block';
+
+    for (const event of upcoming) {
+      const card = document.createElement('div');
+
+      card.className = 'mirage-upcoming-item';
+
+      const label = document.createElement('div');
+
+      label.className = 'mirage-upcoming-label';
+      label.textContent =
+        'BEGINNT INNERHALB VON 24 STUNDEN';
+
+      const title = document.createElement('div');
+
+      title.className = 'mirage-upcoming-title';
+      title.textContent =
+        '📅 ' + (event.title || 'Termin');
+
+      card.append(label, title);
+
+      card.append(
+        makeDetail(
+          '📆 Datum: ' +
+          formatDate(event.event_date)
+        )
+      );
+
+      card.append(
+        makeDetail(
+          '🕒 Uhrzeit: ' +
+          formatTime(event.start_time) +
+          ' – ' +
+          formatTime(event.end_time) +
+          ' Uhr'
+        )
+      );
+
+      if (
+        event.created_by &&
+        typeof creatorName === 'function'
+      ) {
+        card.append(
+          makeDetail(
+            '👤 Erstellt von: ' +
+            creatorName(event.created_by)
+          )
+        );
+      }
+
+      if (event.description) {
+        const description = document.createElement(
+          'div'
+        );
+
+        description.className =
+          'mirage-upcoming-description';
+
+        description.textContent =
+          event.description;
+
+        card.append(description);
+      }
+
+      const minutesRemaining = Math.ceil(
+        (event.beginsAt - now) / 60000
+      );
+
+      const hours = Math.floor(
+        minutesRemaining / 60
+      );
+
+      const minutes = minutesRemaining % 60;
+
+      const countdown = document.createElement(
+        'div'
+      );
+
+      countdown.className =
+        'mirage-upcoming-countdown';
+
+      countdown.textContent =
+        '⏳ Beginnt in ' +
+        hours + ' Std. ' +
+        minutes + ' Min.';
+
+      card.append(countdown);
+      list.append(card);
+    }
+  }
+
+  async function loadAnnouncements() {
+    if (
+      !db ||
+      !user ||
+      !approved ||
+      activeBan(ban) ||
+      loading ||
+      app.style.display === 'none'
+    ) {
+      renderAnnouncements();
+      return;
+    }
+
+    loading = true;
+
+    try {
+      const { data, error } = await db.rpc(
+        'mirage_upcoming_announcements'
+      );
+
+      if (error) throw error;
+
+      announcements = Array.isArray(data)
+        ? data
+        : [];
+
+      renderAnnouncements();
+
+    } catch (error) {
+      console.error(
+        'Automatische Terminankündigungen:',
+        error
+      );
+
+      announcements = [];
+      panel.style.display = 'none';
+
+    } finally {
+      loading = false;
+    }
+  }
+
+  // Alle 30 Sekunden aktualisieren.
+  setInterval(() => {
+    if (document.hidden) return;
+
+    loadAnnouncements();
+  }, 30000);
+
+  // Sofort nach Rückkehr zum Tab prüfen.
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (!document.hidden) {
+        loadAnnouncements();
+      }
+    }
+  );
+
+  // Nach dem Login bzw. Kalenderaufruf
+  // die Ankündigungen laden.
+  const originalShowCalendarUpcoming =
+    showCalendar;
+
+  showCalendar = function(...args) {
+    const result =
+      originalShowCalendarUpcoming(...args);
+
+    setTimeout(loadAnnouncements, 500);
+
+    return result;
+  };
+
+  // Beim Abmelden die Anzeige leeren.
+  const originalHidePanelsUpcoming =
+    hidePanels;
+
+  hidePanels = function(...args) {
+    const result =
+      originalHidePanelsUpcoming(...args);
+
+    panel.style.display = 'none';
+
+    return result;
+  };
+
+  // Nach erfolgreichem Kalenderladen
+  // zusätzlich die Termine prüfen.
+  const originalLoadEventsUpcoming =
+    loadEvents;
+
+  loadEvents = async function(...args) {
+    const result =
+      await originalLoadEventsUpcoming(...args);
+
+    if (
+      user &&
+      approved &&
+      app.style.display !== 'none'
+    ) {
+      loadAnnouncements();
+    }
+
+    return result;
+  };
+
+  // Beim ersten Seitenaufruf starten.
+  const startup = setInterval(() => {
+    if (!db) return;
+
+    clearInterval(startup);
+
+    setTimeout(loadAnnouncements, 1000);
+  }, 200);
+
+})();
+</script>
+
+<!-- ENDE AUTOMATISCHE TERMINANKÜNDIGUNGEN -->
+
 </body>
 </html>
