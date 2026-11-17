@@ -86,6 +86,19 @@ p{color:var(--muted)}
 #banCountdown{font-size:25px;font-weight:900;color:#ff8a9a;margin:18px 0}
 .event-info{margin:12px 0;padding:11px;background:#0b1727;border:1px solid #2b425f;border-radius:9px;color:#a9c5e7;font-size:11px}
 .event-info div+div{margin-top:4px}
+.logfilters{display:grid;grid-template-columns:minmax(180px,2fr) repeat(3,minmax(120px,1fr));gap:10px;margin:16px 0}
+.logfilters input,.logfilters select,.logsettings select{width:100%;background:#0a1524;border:1px solid #365477;border-radius:8px;padding:10px;color:white}
+.logitem{border:1px solid var(--line);background:var(--card);border-radius:11px;padding:12px;margin:9px 0}
+.logitem summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logitem summary::-webkit-details-marker{display:none}
+.logitem summary strong{color:#eaf3ff}
+.logitem pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#081320;border:1px solid #2c4564;padding:12px;border-radius:9px;font-size:11px;max-height:350px;overflow:auto}
+.logchange{padding:8px 10px;background:#0a1829;border-radius:8px;margin-top:8px;font-size:12px;overflow-wrap:anywhere}
+.logsettings{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.logsettings .flex{justify-content:flex-start}
+.logsettings select{max-width:240px}
+@media(max-width:850px){.logfilters{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.logfilters{grid-template-columns:1fr}}
 @media(max-width:700px){.shell{padding:12px}.adminfields{grid-template-columns:1fr}.toolbar{align-items:flex-start}header{align-items:flex-start}}
 </style>
 </head>
@@ -148,6 +161,7 @@ p{color:var(--muted)}
 <div class="flex">
 <span id="userStatus" class="small"></span>
 <button id="adminBtn" class="primary" style="display:none">🛡 Admin</button>
+<button id="logsBtn" class="primary" style="display:none">📜 Logs</button>
 <button id="logoutBtn">Abmelden</button>
 <button id="newTop" class="primary">＋ Termin erstellen</button>
 </div>
@@ -163,12 +177,72 @@ p{color:var(--muted)}
 <p id="adminMessage" class="message"></p>
 </section>
 
+<section id="logsPanel" class="panel" style="display:none">
+<div class="modalhead">
+<div>
+<h2>📜 Mirage Logcenter</h2>
+<p style="margin:0">Änderungen an Terminen und Benutzerkonten nachvollziehen.</p>
+</div>
+<button id="logsClose">Schließen</button>
+</div>
+<div class="logfilters">
+<div class="field">
+<label for="logSearch">🔎 Suche</label>
+<input id="logSearch" placeholder="Benutzer, Termin, Änderung …">
+</div>
+<div class="field">
+<label for="logAction">Aktion</label>
+<select id="logAction">
+<option value="">Alle Aktionen</option>
+<option value="event.">Termine</option>
+<option value="user.">Benutzer</option>
+</select>
+</div>
+<div class="field">
+<label for="logFrom">Von</label>
+<input id="logFrom" type="date">
+</div>
+<div class="field">
+<label for="logTo">Bis</label>
+<input id="logTo" type="date">
+</div>
+</div>
+<div class="flex">
+<span id="logSummary" class="small">Noch nicht geladen</span>
+<div class="flex">
+<button id="logReload">Aktualisieren</button>
+<button id="logExport" style="display:none">⬇ CSV exportieren</button>
+</div>
+</div>
+<div id="logItems"></div>
+<div class="flex" style="justify-content:center;margin:15px 0">
+<button id="logMore" style="display:none">Weitere Logs laden</button>
+</div>
+<div id="logSettings" class="logsettings" style="display:none">
+<h2>👑 Aufbewahrungsdauer</h2>
+<p>Nur der Eigentümer kann diese Einstellung ändern. Aktuell erfolgt keine automatische Löschung.</p>
+<div class="flex">
+<select id="logRetention">
+<option value="">♾️ Dauerhaft (Standard)</option>
+<option value="12">12 Monate</option>
+<option value="24">24 Monate</option>
+<option value="36">36 Monate</option>
+<option value="60">60 Monate</option>
+</select>
+<button id="logSaveRetention" class="primary">Einstellung speichern</button>
+</div>
+<p id="logSettingsMessage" class="small"></p>
+</div>
+</section>
+
 <section class="panel">
 <div class="flex" style="margin-bottom:12px">
 <h2>👥 Mirage Teamstatus</h2>
 <span id="teamSummary" class="small">Verbinde …</span>
 </div>
-<div id="teamList"><span class="small">Teamstatus wird geladen …</span></div>
+<div id="teamList">
+<span class="small">Teamstatus wird geladen …</span>
+</div>
 </section>
 
 <section style="margin-bottom:18px">
@@ -210,10 +284,17 @@ p{color:var(--muted)}
 
 <div class="backdrop" id="eventBackdrop">
 <form class="modal" id="eventForm">
-<div class="modalhead"><h2 id="eventModalTitle">Neuer Termin</h2><button type="button" id="eventClose">✕</button></div>
+<div class="modalhead">
+<h2 id="eventModalTitle">Neuer Termin</h2>
+<button type="button" id="eventClose">✕</button>
+</div>
 <input id="eventId" type="hidden">
-<div class="field"><label>Bezeichnung</label><input id="eventTitle" maxlength="70" required></div>
-<div class="field"><label>Kategorie</label>
+<div class="field">
+<label>Bezeichnung</label>
+<input id="eventTitle" maxlength="70" required>
+</div>
+<div class="field">
+<label>Kategorie</label>
 <select id="eventCategory">
 <option value="blue">Team-Verwaltung</option>
 <option value="white">Orga-Verwaltung-State</option>
@@ -222,13 +303,26 @@ p{color:var(--muted)}
 <option value="orange">Event-Verwaltung</option>
 <option value="purple">Bio-Verwaltung</option>
 <option value="red">Teambesprechung</option>
-</select></div>
-<div class="field"><label>Datum</label><input id="eventDate" type="date" required></div>
-<div class="twocol">
-<div class="field"><label>Beginn</label><input id="eventStart" type="time" required></div>
-<div class="field"><label>Ende</label><input id="eventEnd" type="time" required></div>
+</select>
 </div>
-<div class="field"><label>Zusätzliche Informationen</label><textarea id="eventDescription" rows="3" maxlength="300"></textarea></div>
+<div class="field">
+<label>Datum</label>
+<input id="eventDate" type="date" required>
+</div>
+<div class="twocol">
+<div class="field">
+<label>Beginn</label>
+<input id="eventStart" type="time" required>
+</div>
+<div class="field">
+<label>Ende</label>
+<input id="eventEnd" type="time" required>
+</div>
+</div>
+<div class="field">
+<label>Zusätzliche Informationen</label>
+<textarea id="eventDescription" rows="3" maxlength="300"></textarea>
+</div>
 <div id="eventCreatorInfo" class="event-info" style="display:none"></div>
 <div class="actions">
 <button type="button" id="eventDelete" class="danger">Löschen</button>
@@ -242,11 +336,22 @@ p{color:var(--muted)}
 <div class="modal">
 <h2>⛔ Benutzer sperren</h2>
 <p id="banTarget"></p>
-<div class="field"><label>Sperrart</label>
-<select id="banType"><option value="temporary">Temporär</option><option value="permanent">Permanent</option></select></div>
-<div class="field" id="banDaysField"><label>Dauer in Tagen</label><input id="banDays" type="number" min="1" max="36500" value="7"></div>
+<div class="field">
+<label>Sperrart</label>
+<select id="banType">
+<option value="temporary">Temporär</option>
+<option value="permanent">Permanent</option>
+</select>
+</div>
+<div class="field" id="banDaysField">
+<label>Dauer in Tagen</label>
+<input id="banDays" type="number" min="1" max="36500" value="7">
+</div>
 <p id="banModalMessage" class="message"></p>
-<div class="actions"><button id="banCancel">Abbrechen</button><button id="banConfirm" class="danger">Bann bestätigen</button></div>
+<div class="actions">
+<button id="banCancel">Abbrechen</button>
+<button id="banConfirm" class="danger">Bann bestätigen</button>
+</div>
 </div>
 </div>
 
@@ -260,22 +365,38 @@ const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const fmt=(d,o)=>new Intl.DateTimeFormat('de-DE',o).format(d);
-const mins=t=>{let [h,m]=String(t).slice(0,5).split(':').map(Number);return h*60+m};
-const monday=d=>{let x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-(x.getDay()+6)%7);return x};
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mins=t=>{
+  let [h,m]=String(t).slice(0,5).split(':').map(Number);
+  return h*60+m;
+};
+const monday=d=>{
+  let x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  x.setDate(x.getDate()-(x.getDay()+6)%7);
+  return x;
+};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+}[c]));
 
 let db=null,user=null,role=null,alias='',approved=false,owner=false,ban=null;
 let events=[],creators={},offset=0,authMode='login',recovery=false,banTargetUser=null;
 let eventChannel=null,presenceChannel=null,roster=[],presenceState={};
 let lastActivity=Date.now(),lastTrackedStatus='',checking=false,entering=false;
 let authVersion=0;
+let logRows=[],logPage=0,logHasMore=false,logLoading=false;
+const LOG_PAGE_SIZE=100;
 
 function isOwner(){
   return !!user&&String(user.email||'').trim().toLowerCase()===OWNER_EMAIL.toLowerCase();
 }
 
 function activeBan(x){
-  return !!(x?.banned_permanently||(x?.banned_until&&new Date(x.banned_until).getTime()>Date.now()));
+  return !!(x?.banned_permanently||
+    (x?.banned_until&&new Date(x.banned_until).getTime()>Date.now()));
 }
 
 function canEdit(){
@@ -319,27 +440,38 @@ function creatorText(ev){
 
 async function loadCreators(){
   if(!db||!user||!approved)return;
+
   const {data,error}=await db.rpc('mirage_event_creators');
+
   if(error){
     console.warn('Ersteller konnten nicht geladen werden:',error);
     return;
   }
+
   const next={};
+
   for(const entry of data||[]){
     next[entry.user_id]=entry.alias?.trim()||'Alias nicht vergeben';
   }
+
   creators=next;
+
   if(user&&alias)creators[user.id]=alias;
 }
 
 /* ANSICHTEN */
 
 function hidePanels(){
-  for(const id of ['authPanel','pendingPanel','banPanel','resetPanel','calendarApp']){
+  for(const id of [
+    'authPanel','pendingPanel','banPanel','resetPanel','calendarApp'
+  ]){
     $(id).style.display='none';
   }
+
   $('eventBackdrop').classList.remove('open');
   $('banBackdrop').classList.remove('open');
+  $('logsPanel').style.display='none';
+  $('adminPanel').style.display='none';
 }
 
 function showAuth(msg=''){
@@ -354,12 +486,18 @@ function showPending(){
 }
 
 function showCalendar(){
-  for(const id of ['authPanel','pendingPanel','banPanel','resetPanel']){
+  for(const id of [
+    'authPanel','pendingPanel','banPanel','resetPanel'
+  ]){
     $(id).style.display='none';
   }
+
   $('calendarApp').style.display='block';
   $('userStatus').textContent='👤 '+(alias||'Alias noch nicht vergeben');
   $('adminBtn').style.display=canManage()?'inline-block':'none';
+  $('logsBtn').style.display=canManage()?'inline-block':'none';
+  $('logSettings').style.display=owner?'block':'none';
+  $('logExport').style.display=owner?'inline-block':'none';
   $('newTop').style.display=canEdit()?'inline-block':'none';
   $('newToolbar').style.display=canEdit()?'inline-block':'none';
 }
@@ -372,25 +510,33 @@ function showBan(){
 
 function updateBanCountdown(){
   if($('banPanel').style.display!=='grid'||!ban)return;
+
   if(ban.banned_permanently){
     $('banCountdown').textContent='PERMANENT GESPERRT';
-    $('banExpires').textContent='Diese Sperre hat kein automatisches Ablaufdatum.';
+    $('banExpires').textContent=
+      'Diese Sperre hat kein automatisches Ablaufdatum.';
     return;
   }
+
   const end=new Date(ban.banned_until).getTime();
+
   if(!Number.isFinite(end))return;
+
   const s=Math.max(0,Math.ceil((end-Date.now())/1000));
+
   if(s===0){
     $('banCountdown').textContent='Sperre abgelaufen';
     checkPermissions();
     return;
   }
+
   $('banCountdown').textContent=[
     String(Math.floor(s/86400)).padStart(2,'0'),
     pad(Math.floor(s%86400/3600)),
     pad(Math.floor(s%3600/60)),
     pad(s%60)
   ].join(' : ');
+
   $('banExpires').textContent='Tage : Stunden : Minuten : Sekunden';
 }
 
@@ -414,21 +560,26 @@ function localStatus(){
 function presenceDot(status){
   const dot=document.createElement('span');
   dot.className='dot '+status;
-  dot.title=status==='online'?'Online':status==='away'?'Abwesend':'Offline';
+  dot.title=status==='online'?'Online':
+    status==='away'?'Abwesend':'Offline';
   return dot;
 }
 
 function connectedIds(){
   const ids=new Map();
+
   for(const presences of Object.values(presenceState)){
     for(const item of presences){
       if(!item.user_id)continue;
+
       const old=ids.get(item.user_id);
+
       if(!old||item.status==='online'){
         ids.set(item.user_id,item.status||'online');
       }
     }
   }
+
   return ids;
 }
 
@@ -439,38 +590,59 @@ function statusFor(id){
 function renderTeam(){
   const target=$('teamList');
   target.replaceChildren();
-  const entries=roster.map(r=>({...r,status:statusFor(r.user_id)}));
+
+  const entries=roster.map(r=>({
+    ...r,
+    status:statusFor(r.user_id)
+  }));
+
   const priority={online:0,away:1,offline:2};
-  entries.sort((a,b)=>(priority[a.status]??3)-(priority[b.status]??3)||
-    String(a.alias||'').localeCompare(String(b.alias||''),'de'));
+
+  entries.sort((a,b)=>
+    (priority[a.status]??3)-(priority[b.status]??3)||
+    String(a.alias||'').localeCompare(String(b.alias||''),'de')
+  );
 
   for(const entry of entries){
     const card=document.createElement('div');
     card.className='member';
+
     const avatar=document.createElement('div');
     avatar.className='avatar';
     avatar.textContent='👤';
+
     const info=document.createElement('div');
     info.style.minWidth='0';
+
     const name=document.createElement('div');
     name.className='membername';
     name.textContent=entry.alias||'Alias noch nicht vergeben';
+
     const state=document.createElement('div');
     state.className='small';
+
     state.append(
       presenceDot(entry.status),
       document.createTextNode(
-        entry.status==='online'?'Online':entry.status==='away'?'Abwesend':'Offline'
+        entry.status==='online'?'Online':
+        entry.status==='away'?'Abwesend':'Offline'
       )
     );
+
     info.append(name,state);
     card.append(avatar,info);
     target.append(card);
   }
 
   const count=entries.filter(x=>x.status==='online').length;
-  $('teamSummary').textContent=count+' online · '+entries.length+' Mitglieder';
-  if(!entries.length)target.textContent='Noch keine freigeschalteten Teammitglieder.';
+
+  $('teamSummary').textContent=
+    count+' online · '+entries.length+' Mitglieder';
+
+  if(!entries.length){
+    target.textContent='Noch keine freigeschalteten Teammitglieder.';
+  }
+
   updateAdminDots();
 }
 
@@ -484,52 +656,67 @@ function updateAdminDots(){
 
 async function loadRoster(){
   if(!db||!user||!approved)return;
+
   const {data,error}=await db.rpc('mirage_presence_roster');
+
   if(error){
     console.error('Teamliste:',error);
-    $('teamSummary').textContent='Teamstatus nicht verfügbar – SQL prüfen';
+    $('teamSummary').textContent=
+      'Teamstatus nicht verfügbar – SQL prüfen';
     return;
   }
+
   roster=data||[];
   renderTeam();
 }
 
 async function trackPresence(force=false){
   if(!presenceChannel||!user||!approved)return;
+
   const status=localStatus();
+
   if(!force&&status===lastTrackedStatus)return;
+
   const {error}=await presenceChannel.track({
     user_id:user.id,
     status,
     updated_at:new Date().toISOString()
   });
+
   if(!error)lastTrackedStatus=status;
 }
 
 async function startPresence(){
   if(!db||!user||!approved)return;
+
   if(presenceChannel){
     await loadRoster();
     return;
   }
+
   await loadRoster();
+
   const channel=db.channel('mirage-team-presence',{
     config:{presence:{key:user.id}}
   });
+
   presenceChannel=channel;
 
   channel.on('presence',{event:'sync'},()=>{
     presenceState=channel.presenceState();
     renderTeam();
   });
+
   channel.on('presence',{event:'join'},()=>{
     presenceState=channel.presenceState();
     renderTeam();
   });
+
   channel.on('presence',{event:'leave'},()=>{
     presenceState=channel.presenceState();
     renderTeam();
   });
+
   channel.subscribe(async status=>{
     if(status==='SUBSCRIBED'){
       lastTrackedStatus='';
@@ -540,9 +727,11 @@ async function startPresence(){
 
 async function leavePresence(){
   const channel=presenceChannel;
+
   presenceChannel=null;
   presenceState={};
   lastTrackedStatus='';
+
   if(channel){
     try{
       await channel.untrack();
@@ -551,6 +740,7 @@ async function leavePresence(){
       console.warn(e);
     }
   }
+
   renderTeam();
 }
 
@@ -567,8 +757,11 @@ setInterval(()=>{
 async function getPermissions(){
   const {data,error}=await db.from('mirage_user_roles')
     .select('role,approved,alias,banned_permanently,banned_until')
-    .eq('user_id',user.id).maybeSingle();
+    .eq('user_id',user.id)
+    .maybeSingle();
+
   if(error)throw error;
+
   return data;
 }
 
@@ -582,11 +775,15 @@ function setPermissions(data){
 
 async function enterCalendar(){
   if(!user||entering||recovery)return;
+
   entering=true;
   const version=authVersion;
+
   try{
     const p=await getPermissions();
+
     if(version!==authVersion||!user)return;
+
     setPermissions(p);
 
     if(activeBan(ban)){
@@ -594,6 +791,7 @@ async function enterCalendar(){
       showBan();
       return;
     }
+
     if(!approved){
       await stopChannels();
       events=[];
@@ -601,13 +799,18 @@ async function enterCalendar(){
       showPending();
       return;
     }
+
     showCalendar();
+
     await startPresence();
     await loadCreators();
     await loadEvents();
+
     if(version!==authVersion)return;
+
     subscribeEvents();
     renderCalendar();
+
   }catch(e){
     console.error(e);
     showAuth('Fehler bei der Berechtigungsprüfung: '+e.message);
@@ -618,11 +821,15 @@ async function enterCalendar(){
 
 async function checkPermissions(){
   if(!user||checking||entering||recovery)return;
+
   checking=true;
+
   try{
     const oldRole=role;
     const wasHidden=$('calendarApp').style.display==='none';
+
     const p=await getPermissions();
+
     setPermissions(p);
 
     if(activeBan(ban)){
@@ -630,6 +837,7 @@ async function checkPermissions(){
       showBan();
       return;
     }
+
     if(!approved){
       await stopChannels();
       events=[];
@@ -637,7 +845,9 @@ async function checkPermissions(){
       showPending();
       return;
     }
+
     showCalendar();
+
     if(wasHidden){
       await startPresence();
       await loadCreators();
@@ -647,7 +857,12 @@ async function checkPermissions(){
     }else if(oldRole!==role){
       renderCalendar();
     }
-    if(!canManage())$('adminPanel').style.display='none';
+
+    if(!canManage()){
+      $('adminPanel').style.display='none';
+      $('logsPanel').style.display='none';
+    }
+
   }catch(e){
     console.error(e);
   }finally{
@@ -661,18 +876,33 @@ async function stopChannels(){
     eventChannel=null;
     await db.removeChannel(old);
   }
+
   await leavePresence();
 }
 
 function setAuthMode(mode){
   authMode=mode;
-  $('authTitle').textContent=mode==='login'?'Zugang':'Registrierung';
-  $('authSubmit').textContent=mode==='login'?'Anmelden':'Registrierung beantragen';
-  $('registerConfirmField').style.display=mode==='register'?'grid':'none';
+
+  $('authTitle').textContent=
+    mode==='login'?'Zugang':'Registrierung';
+
+  $('authSubmit').textContent=
+    mode==='login'?'Anmelden':'Registrierung beantragen';
+
+  $('registerConfirmField').style.display=
+    mode==='register'?'grid':'none';
+
   $('registerConfirm').required=mode==='register';
-  $('forgotBtn').style.display=mode==='login'?'block':'none';
-  $('loginTab').className=mode==='login'?'primary':'';
-  $('registerTab').className=mode==='register'?'primary':'';
+
+  $('forgotBtn').style.display=
+    mode==='login'?'block':'none';
+
+  $('loginTab').className=
+    mode==='login'?'primary':'';
+
+  $('registerTab').className=
+    mode==='register'?'primary':'';
+
   $('authMessage').textContent='';
 }
 
@@ -681,30 +911,52 @@ $('registerTab').onclick=()=>setAuthMode('register');
 
 $('loginForm').onsubmit=async e=>{
   e.preventDefault();
+
   const email=$('loginEmail').value.trim();
   const password=$('loginPassword').value;
+
   $('authSubmit').disabled=true;
+
   try{
     if(authMode==='register'){
-      if(password.length<8)throw Error('Mindestens 8 Zeichen erforderlich.');
-      if(password!==$('registerConfirm').value)throw Error('Passwörter stimmen nicht überein.');
+      if(password.length<8){
+        throw Error('Mindestens 8 Zeichen erforderlich.');
+      }
+
+      if(password!==$('registerConfirm').value){
+        throw Error('Passwörter stimmen nicht überein.');
+      }
+
       const {data,error}=await db.auth.signUp({
-        email,password,
-        options:{emailRedirectTo:location.origin+location.pathname}
+        email,
+        password,
+        options:{
+          emailRedirectTo:location.origin+location.pathname
+        }
       });
+
       if(error)throw error;
+
       if(data.session){
         user=data.user;
         await enterCalendar();
       }else{
-        $('authMessage').textContent='Bitte E-Mail bestätigen und auf Freigabe warten.';
+        $('authMessage').textContent=
+          'Bitte E-Mail bestätigen und auf Freigabe warten.';
       }
+
     }else{
-      const {data,error}=await db.auth.signInWithPassword({email,password});
+      const {data,error}=await db.auth.signInWithPassword({
+        email,
+        password
+      });
+
       if(error)throw error;
+
       user=data.user;
       await enterCalendar();
     }
+
   }catch(e){
     $('authMessage').textContent=e.message;
   }finally{
@@ -720,38 +972,53 @@ async function logout(){
 $('logoutBtn').onclick=()=>{
   if(confirm('Wirklich abmelden?'))logout();
 };
+
 $('pendingLogout').onclick=logout;
 $('banLogout').onclick=logout;
 $('pendingRefresh').onclick=checkPermissions;
 
 $('forgotBtn').onclick=async()=>{
   const email=$('loginEmail').value.trim();
+
   if(!email){
-    $('authMessage').textContent='Bitte zuerst deine E-Mail eingeben.';
+    $('authMessage').textContent=
+      'Bitte zuerst deine E-Mail eingeben.';
     return;
   }
+
   const {error}=await db.auth.resetPasswordForEmail(email,{
     redirectTo:location.origin+location.pathname
   });
-  $('authMessage').textContent=error?error.message:
+
+  $('authMessage').textContent=error?
+    error.message:
     'Falls das Konto existiert, erhältst du eine E-Mail.';
 };
 
 $('resetForm').onsubmit=async e=>{
   e.preventDefault();
+
   const password=$('newPassword').value;
+
   if(password!==$('confirmPassword').value){
-    $('resetMessage').textContent='Passwörter stimmen nicht überein.';
+    $('resetMessage').textContent=
+      'Passwörter stimmen nicht überein.';
     return;
   }
+
   const {error}=await db.auth.updateUser({password});
+
   if(error){
     $('resetMessage').textContent=error.message;
     return;
   }
+
   recovery=false;
+
   await db.auth.signOut();
+
   history.replaceState({},'',location.pathname);
+
   showAuth('Passwort geändert. Bitte erneut anmelden.');
 };
 
@@ -759,12 +1026,17 @@ $('resetForm').onsubmit=async e=>{
 
 async function loadEvents(){
   if(!user||!approved||activeBan(ban))return;
-  const {data,error}=await db.from('mirage_events').select('*')
-    .order('event_date').order('start_time');
+
+  const {data,error}=await db.from('mirage_events')
+    .select('*')
+    .order('event_date')
+    .order('start_time');
+
   if(error){
     console.error('Termine:',error);
     return;
   }
+
   events=(data||[]).map(r=>({
     id:r.id,
     title:r.title,
@@ -780,51 +1052,68 @@ async function loadEvents(){
 
 function subscribeEvents(){
   if(eventChannel)db.removeChannel(eventChannel);
+
   eventChannel=db.channel('mirage-calendar-events')
     .on('postgres_changes',{
-      event:'*',schema:'public',table:'mirage_events'
+      event:'*',
+      schema:'public',
+      table:'mirage_events'
     },async()=>{
       await loadCreators();
       await loadEvents();
       renderCalendar();
-    }).subscribe();
+    })
+    .subscribe();
 }
 
 function renderCalendar(){
   if(!approved||activeBan(ban))return;
+
   const mon=monday(new Date());
   mon.setDate(mon.getDate()+offset*7);
+
   const sun=new Date(mon);
   sun.setDate(sun.getDate()+6);
 
-  $('weekLabel').textContent=fmt(mon,{day:'2-digit',month:'long'})+
-    ' – '+fmt(sun,{day:'2-digit',month:'long',year:'numeric'});
+  $('weekLabel').textContent=
+    fmt(mon,{day:'2-digit',month:'long'})+
+    ' – '+
+    fmt(sun,{day:'2-digit',month:'long',year:'numeric'});
 
-  const head=$('head'),body=$('body');
+  const head=$('head');
+  const body=$('body');
+
   head.replaceChildren();
   body.replaceChildren();
+
   head.append(document.createElement('div'));
 
   const times=document.createElement('div');
   times.className='times';
+
   for(let h=7;h<24;h++){
     const el=document.createElement('div');
     el.className='time';
     el.textContent=pad(h)+':00';
     times.append(el);
   }
+
   body.append(times);
 
   for(let i=0;i<7;i++){
     const d=new Date(mon);
     d.setDate(d.getDate()+i);
+
     const key=dateKey(d);
     const today=key===dateKey(new Date());
 
     const hd=document.createElement('div');
     hd.className='dayhead'+(today?' today':'');
-    hd.innerHTML='<span>'+fmt(d,{weekday:'short'}).toUpperCase()+
+
+    hd.innerHTML=
+      '<span>'+fmt(d,{weekday:'short'}).toUpperCase()+
       '</span><b>'+d.getDate()+'</b>';
+
     head.append(hd);
 
     const col=document.createElement('div');
@@ -833,6 +1122,7 @@ function renderCalendar(){
     for(let h=7;h<24;h++){
       const slot=document.createElement('div');
       slot.className='slot';
+
       if(canEdit()){
         slot.onclick=()=>openEvent({
           date:key,
@@ -840,12 +1130,14 @@ function renderCalendar(){
           end:h===23?'23:59':pad(h+1)+':00'
         });
       }
+
       col.append(slot);
     }
 
     for(const ev of events.filter(x=>x.date===key)){
       const top=(mins(ev.start)-420)/60*64;
       const height=(mins(ev.end)-mins(ev.start))/60*64;
+
       if(top<0||top>=1088)continue;
 
       const box=document.createElement('div');
@@ -853,15 +1145,15 @@ function renderCalendar(){
       box.style.top=top+'px';
       box.style.height=Math.max(27,height-3)+'px';
 
-      // Einheitliche Kalenderansicht:
-      // Keine Erstellerzeile in der Terminkarte.
-      box.innerHTML='<b>'+esc(ev.title)+'</b><small>'+
+      box.innerHTML=
+        '<b>'+esc(ev.title)+'</b><small>'+
         esc(ev.start)+'–'+esc(ev.end)+
         (ev.description?' · '+esc(ev.description):'')+
         '</small>';
 
       box.onclick=e=>{
         e.stopPropagation();
+
         if(canEdit()){
           openEvent(ev);
         }else{
@@ -876,13 +1168,16 @@ function renderCalendar(){
 
       col.append(box);
     }
+
     body.append(col);
   }
 }
 
 function openEvent(ev={}){
   if(!canEdit())return;
+
   $('eventForm').reset();
+
   $('eventId').value=ev.id||'';
   $('eventTitle').value=ev.title||'';
   $('eventCategory').value=ev.category||'blue';
@@ -890,10 +1185,13 @@ function openEvent(ev={}){
   $('eventStart').value=ev.start||'19:00';
   $('eventEnd').value=ev.end||'20:00';
   $('eventDescription').value=ev.description||'';
-  $('eventModalTitle').textContent=ev.id?'Termin bearbeiten':'Neuen Termin erstellen';
-  $('eventDelete').style.display=ev.id?'inline-block':'none';
 
-  // Erstellerinformationen nur im geöffneten Termin.
+  $('eventModalTitle').textContent=
+    ev.id?'Termin bearbeiten':'Neuen Termin erstellen';
+
+  $('eventDelete').style.display=
+    ev.id?'inline-block':'none';
+
   const info=$('eventCreatorInfo');
   info.replaceChildren();
 
@@ -901,10 +1199,12 @@ function openEvent(ev={}){
     info.style.display='block';
 
     const line1=document.createElement('div');
-    line1.textContent='👤 Erstellt von: '+creatorName(ev.createdBy);
+    line1.textContent=
+      '👤 Erstellt von: '+creatorName(ev.createdBy);
 
     const line2=document.createElement('div');
-    line2.textContent='🕒 Erstellt am: '+createdAtText(ev.createdAt);
+    line2.textContent=
+      '🕒 Erstellt am: '+createdAtText(ev.createdAt);
 
     info.append(line1,line2);
   }else{
@@ -920,13 +1220,16 @@ function closeEvent(){
 
 $('eventClose').onclick=closeEvent;
 $('eventCancel').onclick=closeEvent;
+
 $('eventBackdrop').onclick=e=>{
   if(e.target===$('eventBackdrop'))closeEvent();
 };
 
 $('eventForm').onsubmit=async e=>{
   e.preventDefault();
+
   await checkPermissions();
+
   if(!canEdit())return;
 
   if(mins($('eventEnd').value)<=mins($('eventStart').value)){
@@ -935,6 +1238,7 @@ $('eventForm').onsubmit=async e=>{
   }
 
   const id=$('eventId').value;
+
   const item={
     title:$('eventTitle').value.trim(),
     category:$('eventCategory').value,
@@ -944,10 +1248,12 @@ $('eventForm').onsubmit=async e=>{
     description:$('eventDescription').value.trim()
   };
 
-  // Die Datenbank protokolliert INSERT und UPDATE.
   const result=id?
     await db.from('mirage_events').update(item).eq('id',id):
-    await db.from('mirage_events').insert({...item,created_by:user.id});
+    await db.from('mirage_events').insert({
+      ...item,
+      created_by:user.id
+    });
 
   if(result.error){
     alert(result.error.message);
@@ -955,20 +1261,26 @@ $('eventForm').onsubmit=async e=>{
   }
 
   closeEvent();
+
   await loadCreators();
   await loadEvents();
+
   renderCalendar();
 };
 
 $('eventDelete').onclick=async()=>{
   await checkPermissions();
+
   if(!canEdit())return;
 
   const id=$('eventId').value;
+
   if(!id||!confirm('Termin wirklich löschen?'))return;
 
-  // Die Datenbank protokolliert DELETE.
-  const {error}=await db.from('mirage_events').delete().eq('id',id);
+  const {error}=await db.from('mirage_events')
+    .delete()
+    .eq('id',id);
+
   if(error){
     alert(error.message);
     return;
@@ -979,20 +1291,428 @@ $('eventDelete').onclick=async()=>{
   renderCalendar();
 };
 
-$('prev').onclick=()=>{offset--;renderCalendar()};
-$('next').onclick=()=>{offset++;renderCalendar()};
-$('todayBtn').onclick=()=>{offset=0;renderCalendar()};
+$('prev').onclick=()=>{
+  offset--;
+  renderCalendar();
+};
+
+$('next').onclick=()=>{
+  offset++;
+  renderCalendar();
+};
+
+$('todayBtn').onclick=()=>{
+  offset=0;
+  renderCalendar();
+};
+
 $('newTop').onclick=()=>openEvent();
 $('newToolbar').onclick=()=>openEvent();
+
+/* LOGCENTER */
+
+const logLabels={
+  'event.created':'Termin erstellt',
+  'event.updated':'Termin bearbeitet',
+  'event.deleted':'Termin gelöscht',
+  'user.created':'Benutzer angelegt',
+  'user.updated':'Benutzer geändert',
+  'user.deleted':'Benutzer gelöscht',
+  'user.role_changed':'Rang geändert',
+  'user.approved':'Benutzer freigegeben',
+  'user.deapproved':'Freigabe entzogen',
+  'user.alias_changed':'Alias geändert',
+  'user.banned':'Benutzer gesperrt',
+  'user.unbanned':'Sperre aufgehoben'
+};
+
+const logFieldLabels={
+  title:'Titel',
+  category:'Kategorie',
+  event_date:'Datum',
+  start_time:'Beginn',
+  end_time:'Ende',
+  description:'Beschreibung',
+  role:'Rang',
+  approved:'Freigabe',
+  alias:'Alias',
+  banned_permanently:'Permanente Sperre',
+  banned_until:'Gesperrt bis',
+  created_by:'Erstellt von',
+  created_at:'Erstellt am'
+};
+
+function logTime(value){
+  return createdAtText(value);
+}
+
+function logValue(value){
+  if(value===null||value===undefined||value===''){
+    return '—';
+  }
+
+  if(typeof value==='boolean'){
+    return value?'Ja':'Nein';
+  }
+
+  if(typeof value==='object'){
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
+function logActor(entry){
+  return creatorName(entry.actor_id)+
+    (entry.actor_id?
+      ' · '+entry.actor_id.slice(0,8):
+      ' · System/SQL');
+}
+
+function logSubject(entry){
+  const data=entry.new_data||entry.old_data||{};
+
+  if(entry.entity_type==='event'){
+    return data.title||'Unbenannter Termin';
+  }
+
+  return data.alias||
+    'Benutzer '+String(entry.entity_id||'').slice(0,8);
+}
+
+function logChanges(entry){
+  const before=entry.old_data||{};
+  const after=entry.new_data||{};
+
+  const keys=new Set([
+    ...Object.keys(before),
+    ...Object.keys(after)
+  ]);
+
+  const changed=[];
+
+  for(const key of keys){
+    if([
+      'id','user_id','created_at','created_by'
+    ].includes(key)){
+      continue;
+    }
+
+    if(JSON.stringify(before[key])===JSON.stringify(after[key])){
+      continue;
+    }
+
+    changed.push({
+      field:logFieldLabels[key]||key,
+      old:before[key],
+      new:after[key]
+    });
+  }
+
+  return changed;
+}
+
+function renderLogs(){
+  const search=$('logSearch').value.trim().toLocaleLowerCase('de');
+  const action=$('logAction').value;
+  const from=$('logFrom').value;
+  const to=$('logTo').value;
+
+  const filtered=logRows.filter(entry=>{
+    if(action&&!String(entry.action).startsWith(action)){
+      return false;
+    }
+
+    const date=String(entry.created_at||'').slice(0,10);
+
+    if(from&&date<from)return false;
+    if(to&&date>to)return false;
+
+    const hay=[
+      logLabels[entry.action]||entry.action,
+      logActor(entry),
+      logSubject(entry),
+      entry.entity_id,
+      JSON.stringify(entry.old_data),
+      JSON.stringify(entry.new_data)
+    ].join(' ').toLocaleLowerCase('de');
+
+    return !search||hay.includes(search);
+  });
+
+  $('logSummary').textContent=
+    filtered.length+' Einträge angezeigt · '+
+    logRows.length+' geladen'+
+    (logHasMore?' · weitere vorhanden':'');
+
+  const target=$('logItems');
+  target.replaceChildren();
+
+  if(!filtered.length){
+    const p=document.createElement('p');
+    p.textContent=
+      'Keine passenden Logeinträge in den geladenen Daten.';
+    target.append(p);
+  }
+
+  for(const entry of filtered){
+    const details=document.createElement('details');
+    details.className='logitem';
+
+    const summary=document.createElement('summary');
+    const left=document.createElement('div');
+
+    const title=document.createElement('strong');
+    title.textContent=
+      (entry.entity_type==='event'?'📅 ':'👤 ')+
+      (logLabels[entry.action]||entry.action);
+
+    const sub=document.createElement('div');
+    sub.className='small';
+    sub.textContent=
+      logSubject(entry)+' · '+logActor(entry);
+
+    left.append(title,sub);
+
+    const time=document.createElement('span');
+    time.className='small';
+    time.textContent=logTime(entry.created_at);
+
+    summary.append(left,time);
+    details.append(summary);
+
+    const changes=logChanges(entry);
+
+    if(changes.length){
+      for(const change of changes){
+        const div=document.createElement('div');
+        div.className='logchange';
+
+        const heading=document.createElement('strong');
+        heading.textContent=change.field;
+
+        const old=document.createElement('div');
+        old.textContent='Vorher: '+logValue(change.old);
+
+        const newer=document.createElement('div');
+        newer.textContent='Nachher: '+logValue(change.new);
+
+        div.append(heading,old,newer);
+        details.append(div);
+      }
+    }
+
+    const id=document.createElement('p');
+    id.className='small';
+    id.textContent=
+      'Log-ID: '+entry.id+
+      ' · Betroffene ID: '+(entry.entity_id||'—');
+
+    details.append(id);
+    target.append(details);
+  }
+
+  $('logMore').style.display=
+    logHasMore?'inline-block':'none';
+}
+
+async function loadLogs(reset=true){
+  if(!canManage()||logLoading)return;
+
+  logLoading=true;
+
+  $('logReload').disabled=true;
+  $('logMore').disabled=true;
+
+  try{
+    const nextPage=reset?0:logPage+1;
+
+    const {data,error}=await db.from('mirage_audit_logs')
+      .select(
+        'id,created_at,actor_id,action,entity_type,entity_id,old_data,new_data'
+      )
+      .order('id',{ascending:false})
+      .range(
+        nextPage*LOG_PAGE_SIZE,
+        (nextPage+1)*LOG_PAGE_SIZE-1
+      );
+
+    if(error)throw error;
+
+    if(reset)logRows=[];
+
+    logRows.push(...(data||[]));
+
+    logPage=nextPage;
+    logHasMore=(data||[]).length===LOG_PAGE_SIZE;
+
+    renderLogs();
+
+  }catch(error){
+    $('logSummary').textContent=
+      'Fehler beim Laden: '+error.message;
+  }finally{
+    logLoading=false;
+    $('logReload').disabled=false;
+    $('logMore').disabled=false;
+  }
+}
+
+async function loadLogSettings(){
+  if(!canManage())return;
+
+  const {data,error}=await db.from('mirage_log_settings')
+    .select('retention_months')
+    .eq('id',1)
+    .maybeSingle();
+
+  if(error){
+    $('logSettingsMessage').textContent=error.message;
+    return;
+  }
+
+  $('logRetention').value=
+    data?.retention_months==null?
+      '':
+      String(data.retention_months);
+
+  $('logSettingsMessage').textContent=
+    data?.retention_months==null?
+      'Aktuell: Dauerhafte Aufbewahrung.':
+      'Aktuell: '+data.retention_months+
+      ' Monate (noch keine automatische Bereinigung).';
+}
+
+$('logsBtn').onclick=async()=>{
+  if(!canManage())return;
+
+  $('adminPanel').style.display='none';
+  $('logsPanel').style.display='block';
+
+  await loadCreators();
+
+  await Promise.all([
+    loadLogs(true),
+    loadLogSettings()
+  ]);
+
+  $('logsPanel').scrollIntoView({
+    behavior:'smooth'
+  });
+};
+
+$('logsClose').onclick=()=>{
+  $('logsPanel').style.display='none';
+};
+
+$('logReload').onclick=()=>loadLogs(true);
+$('logMore').onclick=()=>loadLogs(false);
+
+for(const id of [
+  'logSearch','logAction','logFrom','logTo'
+]){
+  $(id).addEventListener(
+    id==='logSearch'?'input':'change',
+    renderLogs
+  );
+}
+
+$('logSaveRetention').onclick=async()=>{
+  if(!owner){
+    alert('Nur der Eigentümer darf diese Einstellung ändern.');
+    return;
+  }
+
+  const value=$('logRetention').value;
+  const label=value?value+' Monate':'dauerhaft';
+
+  if(!confirm(
+    'Aufbewahrungsdauer auf '+label+' setzen?'
+  )){
+    return;
+  }
+
+  $('logSaveRetention').disabled=true;
+
+  const {error}=await db.rpc('mirage_set_log_retention',{
+    p_months:value?Number(value):null
+  });
+
+  $('logSaveRetention').disabled=false;
+
+  if(error){
+    $('logSettingsMessage').textContent=error.message;
+    return;
+  }
+
+  await loadLogSettings();
+
+  alert(
+    'Aufbewahrungsdauer gespeichert. '+
+    'Es erfolgt derzeit keine automatische Löschung.'
+  );
+};
+
+$('logExport').onclick=()=>{
+  if(!owner)return;
+
+  const csvCell=value=>
+    '"'+String(value??'').replace(/"/g,'""')+'"';
+
+  const columns=[
+    'id',
+    'created_at',
+    'actor_id',
+    'action',
+    'entity_type',
+    'entity_id',
+    'old_data',
+    'new_data'
+  ];
+
+  const lines=[
+    columns.map(csvCell).join(';')
+  ];
+
+  for(const row of logRows){
+    lines.push(
+      columns.map(key=>csvCell(
+        typeof row[key]==='object'&&row[key]!==null?
+          JSON.stringify(row[key]):
+          row[key]
+      )).join(';')
+    );
+  }
+
+  const blob=new Blob(
+    ['\uFEFF'+lines.join('\r\n')],
+    {type:'text/csv;charset=utf-8'}
+  );
+
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+
+  link.href=url;
+  link.download='mirage-logs-'+dateKey(new Date())+'.csv';
+  link.click();
+
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
 
 /* BENUTZERVERWALTUNG */
 
 $('adminBtn').onclick=async()=>{
   if(!canManage())return;
+
+  $('logsPanel').style.display='none';
   $('adminPanel').style.display='block';
+
   await loadRoster();
   await loadAdminUsers();
-  $('adminPanel').scrollIntoView({behavior:'smooth'});
+
+  $('adminPanel').scrollIntoView({
+    behavior:'smooth'
+  });
 };
 
 $('adminClose').onclick=()=>{
@@ -1006,6 +1726,7 @@ async function loadAdminUsers(){
   target.textContent='Benutzer werden geladen …';
 
   const {data,error}=await db.rpc('mirage_admin_list_users');
+
   if(error){
     target.textContent='Fehler: '+error.message;
     return;
@@ -1014,8 +1735,10 @@ async function loadAdminUsers(){
   target.replaceChildren();
 
   for(const entry of data||[]){
-    const own=String(entry.email||'').trim().toLowerCase()===
+    const own=
+      String(entry.email||'').trim().toLowerCase()===
       OWNER_EMAIL.toLowerCase();
+
     const banned=activeBan(entry);
 
     const row=document.createElement('article');
@@ -1025,8 +1748,10 @@ async function loadAdminUsers(){
     heading.className='flex';
 
     const name=document.createElement('div');
+
     const strong=document.createElement('strong');
-    strong.textContent=entry.alias||'Alias noch nicht vergeben';
+    strong.textContent=
+      entry.alias||'Alias noch nicht vergeben';
 
     const dot=presenceDot(statusFor(entry.user_id));
     dot.dataset.presenceId=entry.user_id;
@@ -1035,12 +1760,21 @@ async function loadAdminUsers(){
     email.className='small';
     email.textContent=entry.email||'Keine E-Mail';
 
-    name.append(strong,document.createTextNode(' '),dot,email);
+    name.append(
+      strong,
+      document.createTextNode(' '),
+      dot,
+      email
+    );
 
     const state=document.createElement('span');
     state.className='small';
-    state.textContent=banned?'⛔ Gesperrt':
-      entry.approved?'🟢 Freigeschaltet':'🟡 Wartet auf Freigabe';
+
+    state.textContent=banned?
+      '⛔ Gesperrt':
+      entry.approved?
+        '🟢 Freigeschaltet':
+        '🟡 Wartet auf Freigabe';
 
     heading.append(name,state);
 
@@ -1054,6 +1788,7 @@ async function loadAdminUsers(){
     const aliasInput=document.createElement('input');
     aliasInput.value=entry.alias||'';
     aliasInput.maxLength=40;
+
     aliasField.append(aliasLabel,aliasInput);
 
     const roleField=document.createElement('div');
@@ -1061,6 +1796,7 @@ async function loadAdminUsers(){
     roleLabel.textContent='Rang / Berechtigung';
 
     const select=document.createElement('select');
+
     for(const [value,label] of [
       ['zuschauer','Zuschauer'],
       ['administrator','Administrator'],
@@ -1071,6 +1807,7 @@ async function loadAdminUsers(){
       option.textContent=label;
       select.append(option);
     }
+
     select.value=entry.role||'zuschauer';
     select.disabled=own;
 
@@ -1091,12 +1828,15 @@ async function loadAdminUsers(){
 
     saveAlias.onclick=async()=>{
       const value=aliasInput.value.trim();
+
       if(value.length<2||value.length>40){
-        $('adminMessage').textContent='Alias muss 2 bis 40 Zeichen haben.';
+        $('adminMessage').textContent=
+          'Alias muss 2 bis 40 Zeichen haben.';
         return;
       }
 
       saveAlias.disabled=true;
+
       const {error}=await db.rpc('mirage_admin_set_alias',{
         p_user_id:entry.user_id,
         p_alias:value
@@ -1116,7 +1856,9 @@ async function loadAdminUsers(){
       await loadAdminUsers();
       await loadRoster();
       await loadCreators();
+
       renderCalendar();
+
       $('adminMessage').textContent='Alias gespeichert.';
     };
 
@@ -1137,28 +1879,42 @@ async function loadAdminUsers(){
 
         await loadAdminUsers();
         await loadRoster();
+
         $('adminMessage').textContent='Änderung gespeichert.';
       }
 
       const saveRole=document.createElement('button');
       saveRole.textContent='Rolle speichern';
       saveRole.onclick=()=>saveUser(entry.approved);
+
       actions.append(saveRole);
 
       const approvalButton=document.createElement('button');
-      approvalButton.textContent=entry.approved?'Freigabe entziehen':'Freigeben';
-      approvalButton.className=entry.approved?'danger':'primary';
+
+      approvalButton.textContent=
+        entry.approved?'Freigabe entziehen':'Freigeben';
+
+      approvalButton.className=
+        entry.approved?'danger':'primary';
 
       approvalButton.onclick=()=>{
-        if(confirm(entry.approved?'Freigabe entziehen?':'Benutzer freigeben?')){
+        if(confirm(
+          entry.approved?
+            'Freigabe entziehen?':
+            'Benutzer freigeben?'
+        )){
           saveUser(!entry.approved);
         }
       };
+
       actions.append(approvalButton);
 
       const banButton=document.createElement('button');
       banButton.className=banned?'':'danger';
-      banButton.textContent=banned?'🔓 Bann aufheben':'⛔ Sperren / Bannen';
+
+      banButton.textContent=banned?
+        '🔓 Bann aufheben':
+        '⛔ Sperren / Bannen';
 
       banButton.onclick=async()=>{
         if(banned){
@@ -1174,23 +1930,33 @@ async function loadAdminUsers(){
             $('adminMessage').textContent=error.message;
             return;
           }
+
           await loadAdminUsers();
+
         }else{
           banTargetUser=entry;
-          $('banTarget').textContent=entry.alias||entry.email;
+
+          $('banTarget').textContent=
+            entry.alias||entry.email;
+
           $('banType').value='temporary';
           $('banDays').value=7;
           $('banDaysField').style.display='grid';
           $('banModalMessage').textContent='';
+
           $('banBackdrop').classList.add('open');
         }
       };
+
       actions.append(banButton);
 
     }else{
       const note=document.createElement('span');
       note.className='small';
-      note.textContent='♛ Eigentümer · Rang, Freigabe und Sperre geschützt';
+
+      note.textContent=
+        '♛ Eigentümer · Rang, Freigabe und Sperre geschützt';
+
       actions.append(note);
     }
 
@@ -1226,8 +1992,12 @@ $('banConfirm').onclick=async()=>{
   }
 
   if(!confirm(
-    type==='permanent'?'Permanent sperren?':days+' Tage sperren?'
-  ))return;
+    type==='permanent'?
+      'Permanent sperren?':
+      days+' Tage sperren?'
+  )){
+    return;
+  }
 
   const {error}=await db.rpc('mirage_admin_set_ban',{
     p_user_id:banTargetUser.user_id,
@@ -1242,7 +2012,9 @@ $('banConfirm').onclick=async()=>{
 
   $('banBackdrop').classList.remove('open');
   banTargetUser=null;
+
   await loadAdminUsers();
+
   $('adminMessage').textContent='Benutzer gesperrt.';
 };
 
@@ -1254,24 +2026,33 @@ async function init(){
     return;
   }
 
-  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
-    auth:{
-      persistSession:true,
-      autoRefreshToken:true,
-      detectSessionInUrl:true
+  db=window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    {
+      auth:{
+        persistSession:true,
+        autoRefreshToken:true,
+        detectSessionInUrl:true
+      }
     }
-  });
+  );
 
   const query=new URLSearchParams(location.search);
   const hash=new URLSearchParams(location.hash.slice(1));
-  recovery=query.get('type')==='recovery'||hash.get('type')==='recovery';
+
+  recovery=
+    query.get('type')==='recovery'||
+    hash.get('type')==='recovery';
 
   db.auth.onAuthStateChange((event,session)=>{
     if(event==='PASSWORD_RECOVERY'){
       recovery=true;
       user=session?.user||null;
+
       hidePanels();
       $('resetPanel').style.display='grid';
+
       return;
     }
 
@@ -1279,6 +2060,7 @@ async function init(){
 
     if(event==='SIGNED_OUT'){
       authVersion++;
+
       user=null;
       role=null;
       alias='';
@@ -1288,14 +2070,21 @@ async function init(){
       events=[];
       creators={};
       roster=[];
+      logRows=[];
+
       setTimeout(()=>stopChannels(),0);
       showAuth();
+
       return;
     }
 
     if(event==='SIGNED_IN'&&session){
-      if(user?.id!==session.user.id)authVersion++;
+      if(user?.id!==session.user.id){
+        authVersion++;
+      }
+
       user=session.user;
+
       setTimeout(()=>enterCalendar(),0);
     }
   });
@@ -1322,7 +2111,9 @@ async function init(){
 }
 
 setInterval(()=>{
-  if(user&&!recovery)checkPermissions();
+  if(user&&!recovery){
+    checkPermissions();
+  }
 },10000);
 
 setInterval(async()=>{
