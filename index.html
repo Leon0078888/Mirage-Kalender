@@ -72,6 +72,13 @@ p{color:var(--muted)}
 .twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 .actions button{flex:1}
+/* Aufgeraeumte Termin-Aktionen */
+#eventForm{width:min(520px,100%)}
+#eventForm .event-action-area{display:grid;gap:10px;margin-top:16px}
+#eventForm .event-action-area #eventProtocol{width:100%;min-height:45px;font-weight:700;white-space:normal}
+#eventForm .event-action-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#eventForm .event-action-row button{width:100%;min-height:43px;padding:10px 8px}
+@media(max-width:400px){#eventForm .event-action-row{gap:6px}#eventForm .event-action-row button{padding:9px 4px;font-size:12px}}
 .adminrow{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;margin:12px 0}
 .adminrow strong{overflow-wrap:anywhere}
 .adminrow input,.adminrow select{background:#0a1524;color:white;border:1px solid #365477;border-radius:8px;padding:10px;width:100%}
@@ -342,11 +349,13 @@ p{color:var(--muted)}
 <textarea id="eventDescription" rows="3" maxlength="300"></textarea>
 </div>
 <div id="eventCreatorInfo" class="event-info" style="display:none"></div>
-<div class="actions">
+<div class="event-action-area">
+<button type="button" id="eventProtocol" class="primary" style="display:none">📋 Protokoll erstellen / bearbeiten</button>
+<div class="event-action-row">
 <button type="button" id="eventDelete" class="danger">Löschen</button>
-<button type="button" id="eventProtocol" class="primary" style="display:none">📋 Protokoll erstellen</button>
 <button type="button" id="eventCancel">Abbrechen</button>
 <button type="submit" class="primary">Speichern</button>
+</div>
 </div>
 </form>
 </div>
