@@ -278,6 +278,16 @@ p{color:var(--muted)}
 <span><i class="swatch" style="background:#ff8195"></i>Teambesprechung</span>
 </div>
 </div>
+<section class="panel" id="mirageAttendanceOverview" style="margin-top:20px">
+  <div class="flex" style="justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <div><h2 style="margin:0 0 6px">👥 Gesprächs- & Teilnehmerübersicht</h2>
+      <p class="small" style="margin:0">Wer ist bei welchem Termin dabei? Für alle freigeschalteten Mitglieder sichtbar.</p></div>
+    <div class="flex"><select id="mirageAttendanceFilter" aria-label="Termine filtern"><option value="upcoming">Anstehende Termine</option><option value="week">Diese Kalenderwoche</option><option value="all">Alle Termine</option></select>
+      <button type="button" id="mirageAttendanceRefresh">↻ Aktualisieren</button></div>
+  </div>
+  <div id="mirageAttendanceStatus" class="small" style="margin:12px 0">Teilnahmen werden geladen …</div>
+  <div id="mirageAttendanceList"></div>
+</section>
 <p class="small">MIRAGE KALENDER SYSTEM · Zentrale Mirage-Datenbank</p>
 </div>
 
@@ -4577,12 +4587,81 @@ card.append(
       const {error}=await db.from('mirage_event_rsvps').upsert({event_id:String(activeEvent.id),user_id:user.id,response:button.dataset.rsvp},{onConflict:'event_id,user_id'});
       if(error)throw error;
       await refresh();
+      window.mirageRefreshAttendance?.();
     }catch(e){status.textContent='Speichern fehlgeschlagen: '+e.message}
     finally{saving=false;options.forEach(x=>x.disabled=false)}
   }));
 })();
 </script>
 <!-- ENDE MIRAGE TERMIN-ZUSAGEN V1 -->
+<!-- MIRAGE GESPRAECHSUEBERSICHT V1 -->
+<style>
+#mirageAttendanceList{display:grid;gap:12px}
+.mirage-att-card{border:1px solid rgba(110,160,235,.28);border-radius:12px;padding:15px;background:rgba(15,34,65,.55)}
+.mirage-att-card h3{margin:0 0 7px;font-size:16px}
+.mirage-att-meta{color:#a9c4e9;font-size:13px;margin-bottom:10px;line-height:1.6;white-space:pre-wrap}
+.mirage-att-groups{display:flex;flex-wrap:wrap;gap:8px}
+.mirage-att-group{border-radius:9px;padding:9px 11px;background:rgba(255,255,255,.045);flex:1 1 190px;min-width:0;font-size:13px}
+.mirage-att-group strong{display:block;margin-bottom:5px}
+.mirage-att-group span{overflow-wrap:anywhere}
+.mirage-att-actions{display:flex;justify-content:flex-end;margin-top:10px}
+</style>
+<script>
+(function(){
+ const section=document.getElementById('mirageAttendanceOverview');
+ const list=document.getElementById('mirageAttendanceList');
+ const status=document.getElementById('mirageAttendanceStatus');
+ const filter=document.getElementById('mirageAttendanceFilter');
+ let generation=0;
+ const fmtDate=d=>{const [y,m,day]=String(d).split('-').map(Number);return new Intl.DateTimeFormat('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(y,m-1,day))};
+ const node=(tag,text,cls)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
+ const mondayDate=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d};
+ async function refresh(){
+  const v=++generation;
+  if(!user||!approved||activeBan(ban)||section.closest('#calendarApp')?.style.display==='none')return;
+  const all=Array.isArray(events)?events:[];
+  const today=new Date();const todayKey=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
+  const week=mondayDate();const weekEnd=new Date(week);weekEnd.setDate(weekEnd.getDate()+6);
+  const key=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+  const selected=all.filter(e=>e.id&&(filter.value==='all'||(filter.value==='upcoming'&&e.date>=todayKey)||(filter.value==='week'&&e.date>=key(week)&&e.date<=key(weekEnd)))).sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start));
+  status.textContent='Lade Teilnehmerübersicht …';
+  if(!selected.length){list.replaceChildren();status.textContent='Keine Termine in dieser Auswahl.';return}
+  const ids=selected.map(e=>String(e.id));
+  // Alle Antworten nur für freigegebene Benutzer per Supabase-RLS sichtbar.
+  const {data,error}=await db.from('mirage_event_rsvps').select('event_id,user_id,response').in('event_id',ids);
+  if(v!==generation)return;
+  if(error){status.textContent='Teilnehmer konnten nicht geladen werden: '+error.message;list.replaceChildren();return}
+  const grouped=new Map();for(const r of data||[]){const id=String(r.event_id);if(!grouped.has(id))grouped.set(id,[]);grouped.get(id).push(r)}
+  const fragment=document.createDocumentFragment();
+  for(const ev of selected){
+   const card=node('article',undefined,'mirage-att-card');
+   card.append(node('h3',ev.title));
+   const meta=node('div',fmtDate(ev.date)+' · '+ev.start+'–'+ev.end+' Uhr'+(ev.description?'\n📍 Ort / Informationen: '+ev.description:'\n📍 Ort nicht angegeben'),'mirage-att-meta');card.append(meta);
+   const groups=node('div',undefined,'mirage-att-groups');const rows=grouped.get(String(ev.id))||[];
+   for(const [value,label] of [['yes','✅ Zusagen'],['maybe','❔ Vielleicht'],['no','❌ Absagen']]){
+    const subset=rows.filter(r=>r.response===value);
+    const group=node('div',undefined,'mirage-att-group');group.append(node('strong',label+' ('+subset.length+')'));
+    group.append(node('span',subset.length?subset.map(r=>typeof creatorName==='function'?creatorName(r.user_id):r.user_id).join(', '):'Noch niemand'));
+    groups.append(group);
+   }
+   card.append(groups);
+   const actions=node('div',undefined,'mirage-att-actions');const btn=node('button','Eigene Teilnahme ändern');btn.type='button';btn.onclick=()=>window.mirageOpenRsvp(ev);actions.append(btn);card.append(actions);fragment.append(card);
+  }
+  list.replaceChildren(fragment);status.textContent=selected.length+' Termin(e) · '+(data||[]).length+' Rückmeldung(en)';
+ }
+ filter.addEventListener('change',refresh);
+ document.getElementById('mirageAttendanceRefresh').addEventListener('click',refresh);
+ // Nach Daten- und Kalenderaktualisierungen die Übersicht mit aktualisieren.
+ const oldRender=renderCalendar;
+ renderCalendar=function(...args){const out=oldRender.apply(this,args);refresh();return out};
+ document.querySelectorAll('[data-rsvp]').forEach(button=>button.addEventListener('click',()=>setTimeout(refresh,650)));
+ window.mirageRefreshAttendance=refresh;
+ setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);
+ setTimeout(refresh,1000);
+})();
+</script>
+<!-- ENDE MIRAGE GESPRAECHSUEBERSICHT V1 -->
+
 
 </body>
 </html>
