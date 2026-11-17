@@ -2817,5 +2817,580 @@ init();
 })();
 </script>
 
+<!-- MIRAGE SYSTEMVERWALTUNG ERWEITERUNG -->
+<style>
+.mirage-extra-card {
+  background: #14253b;
+  border: 1px solid #365477;
+  border-radius: 13px;
+  padding: 20px;
+  margin-top: 15px;
+}
+.mirage-extra-card h2 {
+  margin-bottom: 10px;
+}
+.mirage-extra-card textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  background: #0a1524;
+  border: 1px solid #365477;
+  border-radius: 9px;
+  color: white;
+  padding: 12px;
+}
+.mirage-extra-card button {
+  margin-top: 10px;
+}
+.mirage-extra-stats {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(145px,1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+.mirage-extra-stat {
+  background: #0a1524;
+  border: 1px solid #294769;
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+}
+.mirage-extra-stat strong {
+  display: block;
+  color: #72b1ff;
+  font-size: 30px;
+}
+.mirage-extra-stat span {
+  color: #91a6c2;
+  font-size: 12px;
+}
+#mirageAnnouncement {
+  display: none;
+  background: #302715;
+  border: 1px solid #b78c28;
+  color: #ffdf81;
+  border-radius: 12px;
+  padding: 15px 18px;
+  margin-bottom: 18px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mirage-extra-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mirage-extra-switch button {
+  min-width: 150px;
+}
+</style>
+
+<script>
+(() => {
+  const panel = document.getElementById(
+    'systemPanel'
+  );
+
+  if (!panel) {
+    console.error(
+      'Mirage Systemverwaltung wurde nicht gefunden.'
+    );
+    return;
+  }
+
+  let config = {
+    registration_enabled: true,
+    announcement_enabled: false,
+    announcement_text: ''
+  };
+
+  let configLoaded = false;
+  let configLoading = false;
+  let configSaving = false;
+
+  const announcement = document.createElement('div');
+  announcement.id = 'mirageAnnouncement';
+
+  const teamSection = document.querySelector(
+    '#calendarApp section.panel'
+  );
+
+  if (teamSection) {
+    teamSection.insertAdjacentElement(
+      'beforebegin',
+      announcement
+    );
+  }
+
+  const extra = document.createElement('div');
+
+  extra.innerHTML = `
+    <div class="mirage-extra-card">
+      <h2>📢 Systemankündigungen</h2>
+      <p>
+        Veröffentliche eine Mitteilung,
+        die allen angemeldeten Benutzern
+        oben im Kalender angezeigt wird.
+      </p>
+
+      <div class="field">
+        <label for="mirageAnnouncementText">
+          Ankündigung
+        </label>
+        <textarea
+          id="mirageAnnouncementText"
+          maxlength="500"
+          placeholder="Deine Mitteilung ..."
+        ></textarea>
+      </div>
+
+      <div class="mirage-extra-switch">
+        <span id="mirageAnnouncementState"
+              class="small">
+          Status wird geladen ...
+        </span>
+        <button
+          id="mirageAnnouncementToggle"
+          type="button"
+        >
+          Ankündigung aktivieren
+        </button>
+      </div>
+
+      <button
+        id="mirageAnnouncementSave"
+        class="primary"
+        type="button"
+      >
+        💾 Ankündigung speichern
+      </button>
+    </div>
+
+    <div class="mirage-extra-card">
+      <h2>📊 Live-Systemübersicht</h2>
+      <p>
+        Aktuelle Zahlen aus deiner
+        Mirage-Datenbank.
+      </p>
+
+      <div class="mirage-extra-stats">
+        <div class="mirage-extra-stat">
+          <strong id="mirageStatUsers">–</strong>
+          <span>Registrierte Benutzer</span>
+        </div>
+        <div class="mirage-extra-stat">
+          <strong id="mirageStatApproved">–</strong>
+          <span>Freigeschaltete Benutzer</span>
+        </div>
+        <div class="mirage-extra-stat">
+          <strong id="mirageStatEvents">–</strong>
+          <span>Kalendertermine</span>
+        </div>
+        <div class="mirage-extra-stat">
+          <strong id="mirageStatBanned">–</strong>
+          <span>Aktive Sperren</span>
+        </div>
+        <div class="mirage-extra-stat">
+          <strong id="mirageStatOnline">–</strong>
+          <span>Online laut Teamstatus</span>
+        </div>
+      </div>
+
+      <button
+        id="mirageStatsReload"
+        type="button"
+      >
+        🔄 Statistiken aktualisieren
+      </button>
+    </div>
+
+    <div class="mirage-extra-card">
+      <h2>🔐 Registrierungssperre</h2>
+      <p>
+        Entscheide, ob neue Benutzer
+        ein Mirage-Konto erstellen dürfen.
+        Bestehende Konten bleiben erhalten.
+      </p>
+
+      <div class="mirage-extra-switch">
+        <span id="mirageRegistrationState"
+              class="small">
+          Status wird geladen ...
+        </span>
+        <button
+          id="mirageRegistrationToggle"
+          type="button"
+        >
+          Registrierung ändern
+        </button>
+      </div>
+    </div>
+
+    <p id="mirageExtraMessage"
+       class="small"></p>
+  `;
+
+  panel.append(extra);
+
+  const el = id => document.getElementById(id);
+
+  function isSystemOwner() {
+    return typeof owner !== 'undefined'
+      && owner === true
+      && typeof isOwner === 'function'
+      && isOwner();
+  }
+
+  function showMessage(message, error = false) {
+    const target = el('mirageExtraMessage');
+    target.textContent = message;
+    target.style.color = error
+      ? '#ff9eac'
+      : '#4ade80';
+  }
+
+  function updateAnnouncement() {
+    const visible =
+      configLoaded &&
+      config.announcement_enabled &&
+      String(config.announcement_text).trim() &&
+      el('calendarApp').style.display !== 'none';
+
+    announcement.style.display =
+      visible ? 'block' : 'none';
+
+    announcement.textContent = visible
+      ? '📢 MITTEILUNG DER PROJEKTLEITUNG\n\n'
+        + config.announcement_text
+      : '';
+  }
+
+  function updateRegistrationUI() {
+    const enabled =
+      config.registration_enabled === true;
+
+    el('mirageRegistrationState').textContent =
+      enabled
+        ? '🟢 Registrierungen aktiviert'
+        : '🔴 Registrierungen gesperrt';
+
+    el('mirageRegistrationToggle').textContent =
+      enabled
+        ? '🔒 Registrierungen sperren'
+        : '🔓 Registrierungen freigeben';
+
+    el('mirageRegistrationToggle').className =
+      enabled ? 'danger' : 'primary';
+
+    const registerTab = el('registerTab');
+
+    if (registerTab) {
+      registerTab.style.display =
+        enabled ? '' : 'none';
+    }
+
+    if (!enabled &&
+        typeof authMode !== 'undefined' &&
+        authMode === 'register') {
+      setAuthMode('login');
+    }
+  }
+
+  function updateConfigUI() {
+    el('mirageAnnouncementState').textContent =
+      config.announcement_enabled
+        ? '🟢 Ankündigung aktiv'
+        : '⚪ Ankündigung deaktiviert';
+
+    el('mirageAnnouncementToggle').textContent =
+      config.announcement_enabled
+        ? 'Ankündigung deaktivieren'
+        : 'Ankündigung aktivieren';
+
+    updateRegistrationUI();
+    updateAnnouncement();
+  }
+
+  async function loadConfig() {
+    if (!db || configLoading) return;
+
+    configLoading = true;
+
+    try {
+      const { data, error } = await db.rpc(
+        'mirage_get_public_config'
+      );
+
+      if (error) throw error;
+      if (!data) throw Error(
+        'Keine Systemeinstellungen vorhanden'
+      );
+
+      config = {
+        registration_enabled:
+          data.registration_enabled === true,
+        announcement_enabled:
+          data.announcement_enabled === true,
+        announcement_text:
+          String(data.announcement_text || '')
+      };
+
+      configLoaded = true;
+      updateConfigUI();
+
+      if (
+        document.activeElement !==
+        el('mirageAnnouncementText')
+      ) {
+        el('mirageAnnouncementText').value =
+          config.announcement_text;
+      }
+
+    } catch (error) {
+      console.error('Systemkonfiguration:', error);
+      configLoaded = false;
+
+      // Bei unbekanntem Status keine neue
+      // Registrierung über die UI erlauben.
+      el('registerTab').style.display = 'none';
+
+      showMessage(
+        'Systemeinstellungen konnten nicht ' +
+        'geladen werden: ' + error.message,
+        true
+      );
+    } finally {
+      configLoading = false;
+    }
+  }
+
+  async function saveConfig(next) {
+    if (!isSystemOwner() || configSaving) return false;
+
+    configSaving = true;
+
+    const controls = [
+      'mirageAnnouncementSave',
+      'mirageAnnouncementToggle',
+      'mirageRegistrationToggle'
+    ];
+
+    controls.forEach(id => {
+      el(id).disabled = true;
+    });
+
+    try {
+      const { error } = await db.rpc(
+        'mirage_update_system_config',
+        {
+          p_registration_enabled:
+            next.registration_enabled,
+          p_announcement_enabled:
+            next.announcement_enabled,
+          p_announcement_text:
+            next.announcement_text
+        }
+      );
+
+      if (error) throw error;
+
+      config = { ...next };
+      configLoaded = true;
+
+      updateConfigUI();
+      showMessage('Einstellungen gespeichert.');
+
+      return true;
+
+    } catch (error) {
+      showMessage(
+        'Speichern fehlgeschlagen: ' +
+        error.message,
+        true
+      );
+
+      return false;
+
+    } finally {
+      configSaving = false;
+
+      controls.forEach(id => {
+        el(id).disabled = false;
+      });
+    }
+  }
+
+  el('mirageAnnouncementSave').onclick =
+    async () => {
+      const next = {
+        ...config,
+        announcement_text:
+          el('mirageAnnouncementText').value.trim()
+      };
+
+      await saveConfig(next);
+    };
+
+  el('mirageAnnouncementToggle').onclick =
+    async () => {
+      const next = {
+        ...config,
+        announcement_text:
+          el('mirageAnnouncementText').value.trim(),
+        announcement_enabled:
+          !config.announcement_enabled
+      };
+
+      if (
+        next.announcement_enabled &&
+        !next.announcement_text
+      ) {
+        showMessage(
+          'Bitte zuerst eine Ankündigung eingeben.',
+          true
+        );
+        return;
+      }
+
+      await saveConfig(next);
+    };
+
+  el('mirageRegistrationToggle').onclick =
+    async () => {
+      const enabled =
+        !config.registration_enabled;
+
+      const question = enabled
+        ? 'Neue Registrierungen wieder erlauben?'
+        : 'Neue Registrierungen jetzt sperren?';
+
+      if (!confirm(question)) return;
+
+      await saveConfig({
+        ...config,
+        registration_enabled: enabled
+      });
+    };
+
+  async function loadStats() {
+    if (!isSystemOwner() || !db) return;
+
+    el('mirageStatsReload').disabled = true;
+
+    try {
+      const { data, error } = await db.rpc(
+        'mirage_system_stats'
+      );
+
+      if (error) throw error;
+
+      el('mirageStatUsers').textContent =
+        data.users ?? '–';
+
+      el('mirageStatApproved').textContent =
+        data.approved ?? '–';
+
+      el('mirageStatEvents').textContent =
+        data.events ?? '–';
+
+      el('mirageStatBanned').textContent =
+        data.banned ?? '–';
+
+      // Online-Zahl aus dem bereits
+      // vorhandenen Mirage Teamstatus.
+      const online = typeof connectedIds === 'function'
+        ? [...connectedIds().values()].filter(
+            status => status === 'online'
+          ).length
+        : null;
+
+      el('mirageStatOnline').textContent =
+        online ?? '–';
+
+    } catch (error) {
+      showMessage(
+        'Statistiken nicht verfügbar: ' +
+        error.message,
+        true
+      );
+    } finally {
+      el('mirageStatsReload').disabled = false;
+    }
+  }
+
+  el('mirageStatsReload').onclick = loadStats;
+
+  // Registrierungen auch bei direktem
+  // Formularaufruf im Browser verhindern.
+  el('loginForm').addEventListener(
+    'submit',
+    event => {
+      if (
+        authMode === 'register' &&
+        (!configLoaded ||
+         !config.registration_enabled)
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        el('authMessage').textContent =
+          'Registrierungen sind derzeit ' +
+          'deaktiviert. Bitte wende dich ' +
+          'an die Projektleitung.';
+      }
+    },
+    true
+  );
+
+  // Beim Öffnen der Systemverwaltung
+  // Konfiguration und Zahlen laden.
+  el('systemBtn').addEventListener(
+    'click',
+    async () => {
+      if (!isSystemOwner()) return;
+
+      await loadConfig();
+      await loadStats();
+    }
+  );
+
+  // Bei jeder Kalenderanzeige auch die
+  // öffentliche Ankündigung aktualisieren.
+  const oldShowCalendarExtra = showCalendar;
+
+  showCalendar = function(...args) {
+    const result = oldShowCalendarExtra(...args);
+    updateAnnouncement();
+    return result;
+  };
+
+  // Konfiguration regelmäßig synchronisieren.
+  setInterval(() => {
+    if (db) loadConfig();
+  }, 15000);
+
+  // Beim ersten Laden abrufen.
+  const startup = setInterval(() => {
+    if (!db) return;
+
+    clearInterval(startup);
+    loadConfig();
+  }, 100);
+
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+      if (!document.hidden && db) {
+        loadConfig();
+      }
+    }
+  );
+})();
+</script>
+<!-- ENDE MIRAGE SYSTEMVERWALTUNG ERWEITERUNG -->
+
 </body>
 </html>
