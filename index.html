@@ -4663,5 +4663,83 @@ card.append(
 <!-- ENDE MIRAGE GESPRAECHSUEBERSICHT V1 -->
 
 
+
+<!-- MIRAGE TERMINERINNERUNGEN V1: Nur bei geoeffneter Webseite -->
+<style>
+#mirageReminderPanel{margin-top:18px}
+#mirageReminderList{display:grid;gap:10px}
+.mirage-reminder-item{border:1px solid rgba(110,160,235,.3);border-radius:11px;padding:12px;background:rgba(25,53,94,.55);line-height:1.6}
+.mirage-reminder-item strong{display:block}
+.mirage-reminder-item small{color:#b5c9e8}
+.mirage-reminder-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+</style>
+<script>
+(function(){
+ 'use strict';
+ const anchor=document.getElementById('mirageAttendanceOverview');
+ if(!anchor||document.getElementById('mirageReminderPanel'))return;
+ const panel=document.createElement('section');panel.className='panel';panel.id='mirageReminderPanel';
+ panel.innerHTML='<h2>🔔 Terminerinnerungen</h2><p id="mirageReminderStatus">Erinnerungen werden bei geöffneter Webseite geprüft.</p><div id="mirageReminderList"></div><div class="mirage-reminder-actions"><button type="button" id="mirageReminderCheck">Jetzt prüfen</button><button type="button" id="mirageReminderClear">Angezeigte Erinnerungen ausblenden</button></div>';
+ anchor.insertAdjacentElement('afterend',panel);
+ const list=panel.querySelector('#mirageReminderList');
+ const status=panel.querySelector('#mirageReminderStatus');
+ let running=false,shownUser=null;
+ const key=()=>user?'mirage-reminders-v1-'+user.id:null;
+ function read(){try{return JSON.parse(localStorage.getItem(key())||'{}')}catch{return {}}}
+ function write(obj){try{localStorage.setItem(key(),JSON.stringify(obj))}catch(e){console.warn('Erinnerungsstatus nicht speicherbar',e)}}
+ const startTime=e=>{
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(e.date||''));
+  const t=/^(\d{1,2}):(\d{2})/.exec(String(e.start||''));
+  if(!m||!t)return NaN;
+  return new Date(+m[1],+m[2]-1,+m[3],+t[1],+t[2]).getTime();
+ };
+ function show(e,stage,minutes){
+  const item=document.createElement('div');item.className='mirage-reminder-item';
+  const head=document.createElement('strong');head.textContent=(stage==='24h'?'📅 Erinnerung (24 Stunden)':'⏰ Bald geht es los (30 Minuten)')+' · '+e.title;
+  const info=document.createElement('small');info.textContent=e.date+' · '+e.start+' Uhr'+(e.description?' · '+e.description:'');
+  item.append(head,info);list.prepend(item);
+  while(list.children.length>20)list.lastElementChild.remove();
+ }
+ async function check(){
+  if(running||document.visibilityState==='hidden')return;
+  if(!user||!approved||activeBan(ban)||document.getElementById('calendarApp')?.style.display==='none')return;
+  running=true;
+  try{
+   if(shownUser!==user.id){list.replaceChildren();shownUser=user.id}
+   const now=Date.now();
+   const upcoming=(Array.isArray(events)?events:[]).filter(e=>e.id&&startTime(e)>now&&startTime(e)-now<=24*60*60*1000);
+   if(!upcoming.length){status.textContent='Keine Termine innerhalb der nächsten 24 Stunden.';return}
+   const ids=upcoming.map(e=>String(e.id));
+   const {data,error}=await db.from('mirage_event_rsvps').select('event_id,response').eq('user_id',user.id).in('event_id',ids);
+   if(error)throw error;
+   const participating=new Set((data||[]).filter(r=>r.response==='yes'||r.response==='maybe').map(r=>String(r.event_id)));
+   const seen=read();let added=0;
+   for(const e of upcoming){
+    if(!participating.has(String(e.id)))continue;
+    const minutes=(startTime(e)-now)/60000;
+    const stage=minutes<=30?'30m':'24h';
+    // Wenn beide Fristen waehrend eines Offline-Zeitraums verstrichen sind,
+    // nur die zeitlich naechste Erinnerung zeigen.
+    const id=String(e.id)+'|'+e.date+'|'+e.start+'|'+stage;
+    if(seen[id])continue;
+    seen[id]=new Date().toISOString();added++;show(e,stage,minutes);
+   }
+   // Aeltere Erinnerungsmarkierungen nach 60 Tagen entfernen.
+   for(const [id,date] of Object.entries(seen))if(Date.now()-new Date(date).getTime()>60*86400000)delete seen[id];
+   write(seen);
+   status.textContent=added?added+' neue Erinnerung(en).':'Keine neuen Erinnerungen. Zusagen und Vielleicht werden berücksichtigt.';
+  }catch(e){status.textContent='Erinnerungen konnten nicht geladen werden: '+(e.message||e)}
+  finally{running=false}
+ }
+ panel.querySelector('#mirageReminderCheck').addEventListener('click',check);
+ panel.querySelector('#mirageReminderClear').addEventListener('click',()=>{list.replaceChildren();status.textContent='Angezeigte Erinnerungen ausgeblendet.'});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')check()});
+ setInterval(check,60000);
+ setTimeout(check,1500);
+ window.mirageCheckReminders=check;
+})();
+</script>
+<!-- ENDE MIRAGE TERMINERINNERUNGEN V1 -->
+
 </body>
 </html>
