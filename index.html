@@ -295,15 +295,12 @@ p{color:var(--muted)}
   <div class="flex" style="justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
     <div><h2 style="margin:0 0 6px">👥 Gesprächs- & Teilnehmerübersicht</h2>
       <p class="small" style="margin:0">Wer ist bei welchem Termin dabei? Für alle freigeschalteten Mitglieder sichtbar.</p></div>
-    <button type="button" id="mirageAttendanceToggle" aria-expanded="false" aria-controls="mirageAttendanceContent">▾ Übersicht anzeigen</button>
   </div>
-  <div id="mirageAttendanceContent" hidden>
   <div class="flex" style="justify-content:flex-end;margin-top:12px"><select id="mirageAttendanceFilter" aria-label="Termine filtern"><option value="upcoming">Anstehende Termine</option><option value="week">Diese Kalenderwoche</option><option value="all">Alle Termine</option></select>
       <button type="button" id="mirageAttendanceRefresh">↻ Aktualisieren</button></div>
   </div>
   <div id="mirageAttendanceStatus" class="small" style="margin:12px 0">Teilnahmen werden geladen …</div>
   <div id="mirageAttendanceList"></div>
-  </div>
 </section>
 </div>
 <section id="mirageProtocolCenter" class="panel" style="display:none">
@@ -4632,7 +4629,13 @@ card.append(
 <style>
 #mirageAttendanceList{display:grid;gap:12px}
 .mirage-att-card{border:1px solid rgba(110,160,235,.28);border-radius:12px;padding:15px;background:rgba(15,34,65,.55)}
-.mirage-att-card h3{margin:0 0 7px;font-size:16px}
+.mirage-att-card summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;list-style:none}
+.mirage-att-card summary::-webkit-details-marker{display:none}
+.mirage-att-card summary h3{margin:0;font-size:16px}
+.mirage-att-card summary .att-chevron{color:#85b8f5;white-space:nowrap;font-size:12px}
+.mirage-att-card[open] summary{margin-bottom:12px}
+.mirage-att-card[open] summary .att-chevron::after{content:'▴ Einklappen'}
+.mirage-att-card:not([open]) summary .att-chevron::after{content:'▾ Anzeigen'}
 .mirage-att-meta{color:#a9c4e9;font-size:13px;margin-bottom:10px;line-height:1.6;white-space:pre-wrap}
 .mirage-att-groups{display:flex;flex-wrap:wrap;gap:8px}
 .mirage-att-group{border-radius:9px;padding:9px 11px;background:rgba(255,255,255,.045);flex:1 1 190px;min-width:0;font-size:13px}
@@ -4666,10 +4669,14 @@ card.append(
   if(v!==generation)return;
   if(error){status.textContent='Teilnehmer konnten nicht geladen werden: '+error.message;list.replaceChildren();return}
   const grouped=new Map();for(const r of data||[]){const id=String(r.event_id);if(!grouped.has(id))grouped.set(id,[]);grouped.get(id).push(r)}
+  const expanded=new Set([...list.querySelectorAll('details[open][data-event-id]')].map(x=>x.dataset.eventId));
   const fragment=document.createDocumentFragment();
   for(const ev of selected){
-   const card=node('article',undefined,'mirage-att-card');
-   card.append(node('h3',ev.title));
+   const card=node('details',undefined,'mirage-att-card');card.dataset.eventId=String(ev.id);card.open=expanded.has(String(ev.id));
+   const summary=node('summary');
+   const titleBox=node('div');titleBox.append(node('h3',ev.title));
+   titleBox.append(node('span',fmtDate(ev.date)+' · '+ev.start+'–'+ev.end+' Uhr','small'));
+   summary.append(titleBox,node('span',undefined,'att-chevron'));card.append(summary);
    const meta=node('div',fmtDate(ev.date)+' · '+ev.start+'–'+ev.end+' Uhr'+(ev.description?'\n📍 Ort / Informationen: '+ev.description:'\n📍 Ort nicht angegeben'),'mirage-att-meta');card.append(meta);
    const groups=node('div',undefined,'mirage-att-groups');const rows=grouped.get(String(ev.id))||[];
    for(const [value,label] of [['yes','✅ Zusagen'],['maybe','❔ Vielleicht'],['no','❌ Absagen']]){
@@ -4966,19 +4973,6 @@ card.append(
 })();
 </script>
 
-<script>
-/* Einklappbare Gesprächs- & Teilnehmerübersicht */
-(()=>{
- const toggle=document.getElementById('mirageAttendanceToggle');
- const content=document.getElementById('mirageAttendanceContent');
- if(!toggle||!content)return;
- toggle.addEventListener('click',()=>{
-  const open=content.hidden;
-  content.hidden=!open;
-  toggle.setAttribute('aria-expanded',String(open));
-  toggle.textContent=open?'▴ Übersicht einklappen':'▾ Übersicht anzeigen';
- });
-})();
-</script>
+
 </body>
 </html>
