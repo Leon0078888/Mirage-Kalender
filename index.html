@@ -3699,7 +3699,28 @@ init();
       title.textContent =
         '📅 ' + (event.title || 'Termin');
 
-      card.append(label, title);
+      
+card.append(label, title);
+
+// Abteilung aus der Terminkategorie ermitteln
+const abteilungen = {
+  blue: 'Team-Verwaltung',
+  white: 'Orga-Verwaltung-State',
+  gray: 'Orga-Verwaltung-Crime',
+  green: 'Unoff-Verwaltung',
+  orange: 'Event-Verwaltung',
+  purple: 'Bio-Verwaltung',
+  red: 'Teambesprechung'
+};
+
+const abteilung =
+  abteilungen[event.category] ||
+  'Keine Abteilung angegeben';
+
+card.append(
+  makeDetail('🏢 Abteilung: ' + abteilung)
+);
+
 
       card.append(
         makeDetail(
