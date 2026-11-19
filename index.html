@@ -109,6 +109,19 @@ p{color:var(--muted)}
 
 #mirageAttendanceContent[hidden]{display:none!important}
 #mirageAttendanceToggle{min-width:185px}
+
+/* MIRAGE Digital Clock – ausschließlich in der oberen Navigationsleiste */
+#calendarApp > header{display:flex;flex-wrap:nowrap;align-items:center;gap:12px}
+#calendarApp > header > .brand{flex:0 0 auto}
+#calendarApp > header > .flex{flex:0 0 auto;flex-wrap:nowrap;gap:12px}
+#mirageDigitalClock{flex:0 0 265px;min-width:0;margin-left:auto;margin-right:auto;position:relative;isolation:isolate;text-align:center;padding:5px 12px 6px;background:linear-gradient(180deg,#081628,#050b15);border:1px solid #2677c8;clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 13px,100% calc(100% - 13px),calc(100% - 13px) 100%,13px 100%,0 calc(100% - 13px),0 13px);filter:drop-shadow(0 0 5px #1684f566)}
+#mirageDigitalClock:before,#mirageDigitalClock:after{content:"";position:absolute;top:27%;bottom:18%;width:5px;background:#2e95ff;box-shadow:0 0 10px 3px #2387f9;z-index:-1}
+#mirageDigitalClock:before{left:0}#mirageDigitalClock:after{right:0}
+.mirage-clock-caption{font-size:9px;letter-spacing:1.7px;font-weight:700;color:#58adff;white-space:nowrap}
+#mirageClockTime{font-size:27px;font-weight:900;line-height:1.12;color:#4c9dff;letter-spacing:1px;font-variant-numeric:tabular-nums;text-shadow:0 0 9px #177df7a6}
+#mirageClockDate{font-size:11px;color:#f1f6ff;white-space:nowrap}
+@media(max-width:1450px){#calendarApp > header{flex-wrap:wrap}#calendarApp > header > .flex{flex-wrap:wrap;justify-content:flex-end}#mirageDigitalClock{margin-left:auto;margin-right:auto}}
+@media(max-width:700px){#calendarApp > header{justify-content:center}#calendarApp > header > .flex{justify-content:center}#mirageDigitalClock{flex-basis:265px}}
 </style>
 </head>
 <body>
@@ -167,6 +180,11 @@ p{color:var(--muted)}
 <div id="calendarApp" class="shell" style="display:none">
 <header>
 <div class="brand"><div class="logo">M</div><div><b>MIRAGE</b><small>KALENDER</small></div></div>
+<div id="mirageDigitalClock" role="timer" aria-label="Aktuelles Datum und Uhrzeit in Deutschland">
+<div class="mirage-clock-caption">MIRAGE · LIVE SYSTEM TIME</div>
+<div id="mirageClockTime">--:--:--</div>
+<div id="mirageClockDate">Datum wird geladen …</div>
+</div>
 <div class="flex">
 <span id="userStatus" class="small"></span>
 <button type="button" id="mirageTabCalendar" class="primary">📅 Kalender</button>
@@ -4973,5 +4991,18 @@ card.append(
 </script>
 
 
+<script>
+/* Live-Uhr in der Kopfzeile, unabhängig von Supabase */
+(function mirageInitDigitalClock(){
+  const clockTime=document.getElementById('mirageClockTime');
+  const clockDate=document.getElementById('mirageClockDate');
+  if(!clockTime||!clockDate)return;
+  const timeFormatter=new Intl.DateTimeFormat('de-DE',{timeZone:'Europe/Berlin',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const dateFormatter=new Intl.DateTimeFormat('de-DE',{timeZone:'Europe/Berlin',weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  function updateClock(){const now=new Date();clockTime.textContent=timeFormatter.format(now);clockDate.textContent=dateFormatter.format(now);}
+  updateClock();
+  setInterval(updateClock,1000);
+})();
+</script>
 </body>
 </html>
