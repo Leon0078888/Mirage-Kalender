@@ -28,7 +28,12 @@ p{color:var(--muted)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:18px;margin-bottom:18px}
 #teamList{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px}
 .member{background:var(--card);border:1px solid var(--line);padding:12px;border-radius:11px;display:flex;align-items:center;gap:10px}
-.avatar{background:#204c80;border-radius:50%;width:36px;height:36px;display:grid;place-items:center;flex-shrink:0}
+.avatar{position:relative;isolation:isolate;width:56px;height:56px;display:grid;place-items:center;flex-shrink:0;border-radius:50%;background:radial-gradient(circle at 38% 30%,#1d5a9a,#071a34 74%);box-shadow:0 0 13px #128dff66,inset 0 0 15px #259bff33;color:#f2fbff;font-size:16px;font-weight:900;letter-spacing:.2px;text-shadow:0 0 8px #64d7ff,0 0 17px #168dff}
+.avatar::before{content:"";position:absolute;inset:1px;border-radius:50%;border:2.5px solid transparent;border-top-color:#b5f3ff;border-bottom-color:#237bff;box-shadow:0 0 9px #168cff55;animation:mirageOrbitOuter 16s linear infinite;pointer-events:none}
+.avatar::after{content:"";position:absolute;inset:7px;border-radius:50%;border:2px solid transparent;border-top-color:#338cff;border-right-color:#80e6ff;border-bottom-color:#135acb;animation:mirageOrbitInner 23s linear infinite reverse;pointer-events:none}
+@keyframes mirageOrbitOuter{to{transform:rotate(360deg)}}
+@keyframes mirageOrbitInner{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.avatar::before,.avatar::after{animation:none}}
 .membername{font-weight:700;overflow-wrap:anywhere}
 .small{font-size:11px;color:var(--muted)}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-right:5px}
@@ -695,7 +700,12 @@ function renderTeam(){
 
     const avatar=document.createElement('div');
     avatar.className='avatar';
-    avatar.textContent='👤';
+    const aliasParts=String(entry.alias||'').trim().split(/\s+/).filter(Boolean);
+    const initials=aliasParts.length>1
+      ? aliasParts[0].charAt(0)+aliasParts[aliasParts.length-1].charAt(0)
+      : (aliasParts[0]||'?').charAt(0);
+    avatar.textContent=initials.toLocaleUpperCase('de-DE');
+    avatar.setAttribute('aria-label','Initialen von '+(entry.alias||'Unbekannt'));
 
     const info=document.createElement('div');
     info.style.minWidth='0';
