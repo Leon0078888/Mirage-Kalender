@@ -122,6 +122,30 @@ p{color:var(--muted)}
 #mirageClockDate{font-size:11px;color:#f1f6ff;white-space:nowrap}
 @media(max-width:1450px){#calendarApp > header{flex-wrap:wrap}#calendarApp > header > .flex{flex-wrap:wrap;justify-content:flex-end}#mirageDigitalClock{margin-left:auto;margin-right:auto}}
 @media(max-width:700px){#calendarApp > header{justify-content:center}#calendarApp > header > .flex{justify-content:center}#mirageDigitalClock{flex-basis:265px}}
+
+/* MIRAGE QUANTUM 2.0 — nur das Logo und den Schriftzug der Kalender-Kopfzeile ersetzen */
+#calendarApp > header > .mirage-quantum-brand{display:flex;align-items:center;gap:9px;flex:0 0 auto;min-width:0}
+#calendarApp .mirage-quantum-symbol{position:relative;isolation:isolate;display:grid;place-items:center;width:77px;height:77px;flex:0 0 77px}
+#calendarApp .mirage-quantum-symbol .mq-glow{position:absolute;width:53px;height:53px;border-radius:50%;background:#147eff70;filter:blur(13px);animation:mq-brand-glow 2.7s ease-in-out infinite}
+#calendarApp .mirage-quantum-symbol .mq-ring{position:absolute;border-radius:50%;box-sizing:border-box;pointer-events:none}
+#calendarApp .mirage-quantum-symbol .mq-ring-main{width:67px;height:67px;border:2px solid transparent;border-top-color:#a2edff;border-bottom-color:#1667f6;box-shadow:0 0 7px #007bff55,inset 0 0 7px #007bff22;animation:mq-brand-spin 5s linear infinite}
+#calendarApp .mirage-quantum-symbol .mq-ring-inner{width:57px;height:57px;border:1.5px solid transparent;border-top-color:#1b7aff;border-right-color:#7fe4ff;border-bottom-color:#1672d5;animation:mq-brand-spin 3.2s linear infinite reverse}
+#calendarApp .mirage-quantum-symbol .mq-ring-outer{width:75px;height:75px;border:1px dashed #2f9eff80;animation:mq-brand-spin 12s linear infinite}
+#calendarApp .mirage-quantum-symbol .mq-letter{position:relative;z-index:3;font-family:Inter,system-ui,sans-serif;font-size:44px;line-height:1;font-weight:950;letter-spacing:-4px;padding-right:4px;background:linear-gradient(135deg,#effcff 8%,#6cd7ff 43%,#1473ec 90%);background-clip:text;-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 0 5px #29a6ff);animation:mq-brand-float 3.5s ease-in-out infinite}
+#calendarApp .mirage-quantum-symbol .mq-particle{position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;background:#b5f2ff;box-shadow:0 0 5px #64d8ff,0 0 9px #1b83ff;animation:mq-brand-orbit 4s linear infinite;z-index:4}
+#calendarApp .mirage-quantum-symbol .mq-particle-b{animation-delay:-1.33s;width:2.5px;height:2.5px}
+#calendarApp .mirage-quantum-symbol .mq-particle-c{animation-delay:-2.66s;width:2px;height:2px}
+#calendarApp .mirage-quantum-wordmark{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+#calendarApp .mirage-quantum-wordmark .mq-name{font-family:Inter,system-ui,sans-serif;font-size:23px;line-height:1.05;font-weight:900;letter-spacing:.11em;color:#f0faff;text-shadow:0 0 12px #158dff50}
+#calendarApp .mirage-quantum-wordmark .mq-subtitle{font-family:Inter,system-ui,sans-serif;font-size:10px;line-height:1.4;letter-spacing:.43em;font-weight:650;color:#65bfff;margin-top:4px}
+#calendarApp .mirage-quantum-wordmark .mq-underline{height:1px;width:78%;margin-top:7px;background:linear-gradient(90deg,#39baff,transparent);box-shadow:0 0 6px #138eff;animation:mq-brand-line 3s ease-in-out infinite}
+#calendarApp .mirage-quantum-wordmark .mq-system{font-family:monospace;color:#6198be;font-size:6px;letter-spacing:.7px;margin-top:5px;white-space:nowrap}
+/* Absichtlich kein :hover-Animations-Override: die Geschwindigkeit bleibt konstant. */
+@keyframes mq-brand-spin{to{transform:rotate(360deg)}}
+@keyframes mq-brand-float{0%,100%{transform:translateY(2px)}50%{transform:translateY(-3px)}}
+@keyframes mq-brand-glow{0%,100%{opacity:.5;transform:scale(.85)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes mq-brand-orbit{from{transform:translate(-50%,-50%) rotate(0deg) translateX(36px) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg) translateX(36px) rotate(-360deg)}}
+@keyframes mq-brand-line{0%,100%{opacity:.45;transform:scaleX(.8);transform-origin:left}50%{opacity:1;transform:scaleX(1);transform-origin:left}}
 </style>
 </head>
 <body>
@@ -179,7 +203,22 @@ p{color:var(--muted)}
 
 <div id="calendarApp" class="shell" style="display:none">
 <header>
-<div class="brand"><div class="logo">M</div><div><b>MIRAGE</b><small>KALENDER</small></div></div>
+<div class="brand mirage-quantum-brand" aria-label="MIRAGE KALENDER">
+  <div class="mirage-quantum-symbol" aria-hidden="true">
+    <div class="mq-glow"></div>
+    <div class="mq-ring mq-ring-outer"></div>
+    <div class="mq-ring mq-ring-main"></div>
+    <div class="mq-ring mq-ring-inner"></div>
+    <div class="mq-particle"></div><div class="mq-particle mq-particle-b"></div><div class="mq-particle mq-particle-c"></div>
+    <span class="mq-letter">M</span>
+  </div>
+  <div class="mirage-quantum-wordmark">
+    <b class="mq-name">MIRAGE</b>
+    <small class="mq-subtitle">KALENDER</small>
+    <div class="mq-underline"></div>
+    <span class="mq-system">QUANTUM INTERFACE · V2.0</span>
+  </div>
+</div>
 <div id="mirageDigitalClock" role="timer" aria-label="Aktuelles Datum und Uhrzeit in Deutschland">
 <div class="mirage-clock-caption">MIRAGE · LIVE SYSTEM TIME</div>
 <div id="mirageClockTime">--:--:--</div>
