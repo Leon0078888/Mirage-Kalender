@@ -307,16 +307,6 @@ p{color:var(--muted)}
 </section>
 
 <div id="mirageCalendarContent">
-<section class="panel">
-<div class="flex" style="margin-bottom:12px">
-<h2>👥 Mirage Teamstatus</h2>
-<span id="teamSummary" class="small">Verbinde …</span>
-</div>
-<div id="teamList">
-<span class="small">Teamstatus wird geladen …</span>
-</div>
-</section>
-
 <section style="margin-bottom:18px">
 <div class="small" style="color:#79b0f6">INTERNER BEREICH</div>
 <h1>Wochenkalender</h1>
@@ -361,6 +351,16 @@ p{color:var(--muted)}
   <div id="mirageAttendanceStatus" class="small" style="margin:12px 0">Teilnahmen werden geladen …</div>
   <div id="mirageAttendanceList"></div>
 </section>
+<section class="panel">
+<div class="flex" style="margin-bottom:12px">
+<h2>👥 Mirage Teamstatus</h2>
+<span id="teamSummary" class="small">Verbinde …</span>
+</div>
+<div id="teamList">
+<span class="small">Teamstatus wird geladen …</span>
+</div>
+</section>
+
 </div>
 <section id="mirageProtocolCenter" class="panel" style="display:none">
 <div class="modalhead"><div><h2>📋 Mirage Protokollcenter</h2><p>Alle Gesprächsprotokolle zu euren Terminen.</p></div><button type="button" id="mirageProtocolNew" class="primary">＋ Protokoll erstellen</button></div>
@@ -3637,18 +3637,13 @@ init();
     <div id="mirageUpcomingList"></div>
   `;
 
-  // Direkt über dem Teamstatus anzeigen.
-  const teamSection = app.querySelector(
-    'section.panel'
-  );
-
-  if (teamSection) {
-    teamSection.insertAdjacentElement(
-      'beforebegin',
-      panel
-    );
-  } else {
-    app.prepend(panel);
+  // Anstehende Termine oberhalb des Wochenkalenders anzeigen.
+  const calendarContent = document.getElementById('mirageCalendarContent');
+  const calendarHeading = calendarContent?.querySelector('section');
+  if (calendarHeading) {
+    calendarHeading.insertAdjacentElement('beforebegin', panel);
+  } else if (calendarContent) {
+    calendarContent.prepend(panel);
   }
 
   const list = document.getElementById(
@@ -4781,11 +4776,11 @@ card.append(
 <script>
 (function(){
  'use strict';
- const anchor=document.getElementById('mirageAttendanceOverview');
+ const anchor=document.querySelector('#mirageCalendarContent > section');
  if(!anchor||document.getElementById('mirageReminderPanel'))return;
  const panel=document.createElement('section');panel.className='panel';panel.id='mirageReminderPanel';
  panel.innerHTML='<h2>🔔 Terminerinnerungen</h2><p id="mirageReminderStatus">Automatische Aktualisierung alle 30 Sekunden.</p><div id="mirageReminderList"></div><div class="mirage-reminder-actions"><button type="button" id="mirageReminderClear">Erinnerungen ausblenden</button></div>';
- anchor.insertAdjacentElement('afterend',panel);
+ anchor.insertAdjacentElement('beforebegin',panel);
  const list=panel.querySelector('#mirageReminderList');
  const status=panel.querySelector('#mirageReminderStatus');
  const toggle=panel.querySelector('#mirageReminderClear');
