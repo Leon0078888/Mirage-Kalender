@@ -341,7 +341,7 @@ p{color:var(--muted)}
 <span><i class="swatch" style="background:#ff8195"></i>Teambesprechung</span>
 </div>
 </div>
-<section class="panel">
+<section class="panel" style="margin-top:24px">
 <div class="flex" style="margin-bottom:12px">
 <h2>👥 Mirage Teamstatus</h2>
 <span id="teamSummary" class="small">Verbinde …</span>
@@ -4781,6 +4781,11 @@ card.append(
  const panel=document.createElement('section');panel.className='panel';panel.id='mirageReminderPanel';
  panel.innerHTML='<h2>🔔 Terminerinnerungen</h2><p id="mirageReminderStatus">Automatische Aktualisierung alle 30 Sekunden.</p><div id="mirageReminderList"></div><div class="mirage-reminder-actions"><button type="button" id="mirageReminderClear">Erinnerungen ausblenden</button></div>';
  anchor.insertAdjacentElement('beforebegin',panel);
+ // Die Anstehenden Termine stehen vor den Terminerinnerungen.
+ const upcomingPanel=document.getElementById('mirageUpcomingPanel');
+ if(upcomingPanel && upcomingPanel.parentElement===panel.parentElement){
+   upcomingPanel.insertAdjacentElement('afterend',panel);
+ }
  const list=panel.querySelector('#mirageReminderList');
  const status=panel.querySelector('#mirageReminderStatus');
  const toggle=panel.querySelector('#mirageReminderClear');
